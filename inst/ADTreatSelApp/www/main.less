@@ -1,0 +1,53 @@
+.graphEditor {
+    background: url(img/grid.gif);
+
+    .editor {
+        height: 500px;
+    }
+}
+
+.skin-blue {
+    .main-header {
+        .logo, .logo:hover {
+            background: #c61f00 url(SymbolMediana.svg) left bottom no-repeat;
+            padding-left: 44px;
+            letter-spacing: -0.5px;
+        }
+        .navbar {
+            background: #ff2800;
+
+            .sidebar-toggle:hover {
+                background-color: #c61f00;
+            }
+        }
+    }
+
+    .sidebar-menu {
+        li.active>a {
+            border-left-color: #ff2800;
+        }
+        li:hover>a {
+            border-left-color: #c61f00;
+        }
+    }
+}
+
+.box.box-solid.box-primary {
+    border: 1px solid #ff5839;
+
+    .box-header {
+        background: #ff5839;
+        background-color: #ff5839;
+    }
+}
+
+// Trick for progress bar (move it up)
+#shiny-notification-panel {
+    bottom: unset;
+    top: 0;
+}
+
+// DebugInfo Button
+a#DownloadDebugInfo {
+    display: none;
+}

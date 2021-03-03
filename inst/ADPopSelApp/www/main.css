@@ -1,0 +1,38 @@
+.graphEditor {
+  background: url(img/grid.gif);
+}
+.graphEditor .editor {
+  height: 500px;
+}
+.skin-blue .main-header .logo,
+.skin-blue .main-header .logo:hover {
+  background: #c61f00 url(SymbolMediana.svg) left bottom no-repeat;
+  padding-left: 44px;
+  letter-spacing: -0.5px;
+}
+.skin-blue .main-header .navbar {
+  background: #ff2800;
+}
+.skin-blue .main-header .navbar .sidebar-toggle:hover {
+  background-color: #c61f00;
+}
+.skin-blue .sidebar-menu li.active > a {
+  border-left-color: #ff2800;
+}
+.skin-blue .sidebar-menu li:hover > a {
+  border-left-color: #c61f00;
+}
+.box.box-solid.box-primary {
+  border: 1px solid #ff5839;
+}
+.box.box-solid.box-primary .box-header {
+  background: #ff5839;
+  background-color: #ff5839;
+}
+#shiny-notification-panel {
+  bottom: unset;
+  top: 0;
+}
+a#DownloadDebugInfo {
+  display: none;
+}
