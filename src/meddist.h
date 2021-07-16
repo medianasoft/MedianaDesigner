@@ -89,6 +89,7 @@ vector<double> Normal(const int &n, const double &mean, const double &sd) {
 
 }
 
+// # nocov start
 // Vector of uniformly distributed values 
 vector<double> Uniform(const int &n, const double &min, const double &max) {
 
@@ -97,6 +98,7 @@ vector<double> Uniform(const int &n, const double &min, const double &max) {
     return result;  
 
 }
+// # nocov end
 
 // Vector of truncated exponential values 
 vector<double> TruncatedExponential(const int &n, const double &par, const double &min, const double &max) {
@@ -106,7 +108,7 @@ vector<double> TruncatedExponential(const int &n, const double &par, const doubl
     int i;
 
     if (par == 0.0) {
-        temp_vector = Rcpp::runif(n, min, max);
+        temp_vector = Rcpp::runif(n, min, max);     // # nocov
     } else {
         for (i = 0; i < n; i++) {
             temp = - log(1.0 - Rcpp::runif(1, 0.0, 1.0)[0] * (1.0 - exp(-par))) / par;
@@ -129,7 +131,7 @@ vector<double> Enrollment(const int &n, const double &enrollment_period, const i
     // Uniform enrollment
     if (enrollment_distribution == 1) { 
 
-        result = Uniform(n, 0.0, enrollment_period);
+        result = Uniform(n, 0.0, enrollment_period);    // # nocov
 
     }
 
@@ -156,7 +158,7 @@ vector<double> Dropout(const int &n, const int &dropout_distribution, const vect
     // No dropout
     if (dropout_distribution == 1) { 
 
-        result = fillvec(n, 100000.0);
+        result = fillvec(n, 100000.0);      // # nocov
 
     }
 
@@ -172,6 +174,7 @@ vector<double> Dropout(const int &n, const int &dropout_distribution, const vect
 
 }
 
+// # nocov start
 // Multivariate normal distribution (single vector)
 vector<double> MVNormal(const int &m, const vector<double> &mean, const vector<double> &sd, const double &rho) {
 
@@ -222,5 +225,6 @@ vector<double> MVNormal(const int &m, const vector<double> &mean, const vector<d
     return mv_normal_data;
 
 }
+// # nocov end
 
 #endif // MEDDIST_H

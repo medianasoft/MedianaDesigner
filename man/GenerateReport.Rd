@@ -6,6 +6,11 @@
 \alias{ADPopSelReportDoc}
 \alias{EventPredReportDoc}
 \alias{FutRuleReportDoc}
+\alias{print.ADSSModResults}
+\alias{print.ADTreatSelResults}
+\alias{print.ADPopSelResults}
+\alias{print.FutRuleResults}
+\alias{print.EventPredResults}
 
 \title{
 Simulation report for adaptive trials  
@@ -22,3 +27,5 @@ GenerateReport(results, report_filename)
   \item{report_filename}{Character value defining the report's filename. The report is saved in the current working directory.
   }
 }
+\value{No return value, called for side effects}
+

@@ -16,6 +16,15 @@ ADSSMod = function(parameters) {
 
   endpoint_index = parameters$endpoint_index
 
+  if (is.null(parameters$direction)) {
+        parameters$direction_index = 1
+  } else {
+        if (!tolower(parameters$direction) %in% c("higher", "lower")) stop("Direction of favorable outcome (direction): Value must be specified.", call. = FALSE)
+  }
+
+  if (tolower(parameters$direction) == "higher") parameters$direction_index = 1    
+  if (tolower(parameters$direction) == "lower") parameters$direction_index = 2    
+
   if (is.null(parameters$sample_size)) stop("Number of enrolled patients in the two arms (sample_size): Value must be specified.", call. = FALSE)
 
   sample_size = ContinuousErrorCheck(parameters$sample_size, 
@@ -496,6 +505,25 @@ ADSSModReportDoc = function(results) {
 
   #############################################################################
 
+  column_names = c("Population", "Value")
+
+  if (parameters$direction_index == 1) label = "A higher value of the endpoint indicates a more favorable outcome"
+
+  if (parameters$direction_index == 2) label = "A lower value of the endpoint indicates a more favorable outcome"
+
+  col1 = c("Endpoint type", "Direction of favorable outcome") 
+  col2 = c(endpoint_list[endpoint_index], label)
+
+  data_frame = data.frame(col1, col2)
+  title = paste0("Table ", table_index, ". Primary efficacy endpoint")
+
+  column_width = c(3, 3.5)
+  item_list[[item_index]] = CreateTable(data_frame, column_names, column_width, title, FALSE)
+  item_index = item_index + 1
+  table_index = table_index + 1
+
+  #############################################################################
+
   column_names = c("Trial arm", "Parameter", "Value")
 
   col1 = NULL
@@ -686,9 +714,9 @@ ADSSModReportDoc = function(results) {
   l = 100 * parameters$promising_interval[1]
   u = 100 * parameters$promising_interval[2]
 
-  if (endpoint_index %in% c(1, 2)) footnote = paste0("Unfavorable interval: Predicted probability of success at Interim analysis 2 (PPS) is less than ", l, "% (original sample size is retained). Promising interval: PPS is between than ", l, "% and ", u, "% (sample size is increased). Favorable interval: PPS is greater than ", u, "% (original sample size is retained).")
+  if (endpoint_index %in% c(1, 2)) footnote = paste0("Unfavorable interval: Predicted probability of success at Interim analysis 2 (PPS) is less than ", l, "% (original sample size is retained). Promising interval: PPS is between ", l, "% and ", u, "% (sample size is increased). Favorable interval: PPS is greater than ", u, "% (original sample size is retained).")
 
-  if (endpoint_index %in% c(3)) footnote = paste0("Unfavorable interval: Predicted probability of success at Interim analysis 2 (PPS) is less than ", l, "% (original number of events is retained). Promising interval: PPS is between than ", l, "% and ", u, "% (number of events is increased). Favorable interval: PPS is greater than ", u, "% (original number of events is retained).")
+  if (endpoint_index %in% c(3)) footnote = paste0("Unfavorable interval: Predicted probability of success at Interim analysis 2 (PPS) is less than ", l, "% (original number of events is retained). Promising interval: PPS is between ", l, "% and ", u, "% (number of events is increased). Favorable interval: PPS is greater than ", u, "% (original number of events is retained).")
 
   column_width = c(2.5, 2.5, 1.5)
 

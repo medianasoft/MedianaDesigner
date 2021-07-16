@@ -6,6 +6,8 @@ Graphical user interface for an optimal selection of a futility stopping rule at
 \description{
 This function creates a web application with a Shiny-based graphical user interface to facilitate the process of defining an optimal futility stopping rule at an interim analysis in a Phase II or Phase III clinical trial. The application supports the same functionality as the \code{\link{FutRule}} function. For an example of the function call, see \link{FutRuleExample1}.
 }
+\arguments{No arguments}
+\value{No return value, called for side effects}
 \usage{
 FutRuleApp()
 }

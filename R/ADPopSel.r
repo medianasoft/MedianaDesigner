@@ -16,6 +16,15 @@ ADPopSel = function(parameters) {
 
   endpoint_index = parameters$endpoint_index
 
+  if (is.null(parameters$direction)) {
+        parameters$direction_index = 1
+  } else {
+        if (!tolower(parameters$direction) %in% c("higher", "lower")) stop("Direction of favorable outcome (direction): Value must be specified.", call. = FALSE)
+  }
+
+  if (tolower(parameters$direction) == "higher") parameters$direction_index = 1    
+  if (tolower(parameters$direction) == "lower") parameters$direction_index = 2    
+
   if (is.null(parameters$sample_size)) stop("Number of enrolled patients (sample_size): Value must be specified.", call. = FALSE)
 
   sample_size = ContinuousErrorCheck(parameters$sample_size, 
@@ -504,6 +513,25 @@ ADPopSelReportDoc = function(results) {
 
   #############################################################################
 
+  column_names = c("Population", "Value")
+
+  if (parameters$direction_index == 1) label = "A higher value of the endpoint indicates a more favorable outcome"
+
+  if (parameters$direction_index == 2) label = "A lower value of the endpoint indicates a more favorable outcome"
+
+  col1 = c("Endpoint type", "Direction of favorable outcome") 
+  col2 = c(endpoint_list[endpoint_index], label)
+
+  data_frame = data.frame(col1, col2)
+  title = paste0("Table ", table_index, ". Primary efficacy endpoint")
+
+  column_width = c(3, 3.5)
+  item_list[[item_index]] = CreateTable(data_frame, column_names, column_width, title, FALSE)
+  item_index = item_index + 1
+  table_index = table_index + 1
+
+  #############################################################################
+
   column_names = c("Trial arm", "Population", "Parameter", "Value")
 
   if (endpoint_index == 1) {
@@ -517,7 +545,7 @@ ADPopSelReportDoc = function(results) {
     col1 = c(trial_arms[1], "", trial_arms[2], "")
     col2 = c(populations, populations)
     col3 = rep("Rate (%)", 4)
-    col4 = rates
+    col4 = 100 * rates
   }
 
   if (endpoint_index == 3) {

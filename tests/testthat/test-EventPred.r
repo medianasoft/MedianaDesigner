@@ -29,10 +29,22 @@ baseCase = list(
   nsims = 1000
 )
 
+context("EventPred - Success runs")
+
 test_that("Success run EventPred", {
 
   # Success run
-  results = EventPred(baseCase)
+  results = EventPred(
+    list(
+        data_set = baseCase$data_set,
+        time_points = baseCase$time_points,
+        event_prior_distribution = baseCase$event_prior_distribution,
+        dropout_prior_distribution = baseCase$dropout_prior_distribution,
+        enrollment_prior_distribution = baseCase$enrollment_prior_distribution#,
+        # missing, use default 1000
+        #nsims = baseCase$nsims
+    )
+  )
   expect_is(results, "EventPredResults")
   expect_named(results, c('parameters', 'interim_analysis', 'predictions'))
 
@@ -48,8 +60,11 @@ test_that("Success run EventPred", {
     info = paste("predictionTarget(",predictionTarget,") is out of range 350±10"))
 
   # Check for report generation
-  EventPredReport(results, tempfile(fileext = ".docx"))
+  EventPredReportDoc(results)
+  GenerateReport(results, tempfile(fileext = ".docx"))
 })
+
+context("EventPred - Error checks")
 
 test_that("Input parameters errors check EventPred", {
   # Errors check
@@ -147,64 +162,99 @@ test_that("Input parameters errors check EventPred", {
     info = "Checking for missing dropout variable in dataset"
   )
 
-  expect_error(
-    EventPred(
-      list(
-        data_set = baseCase$data_set,
-        # missing
-        #time_points = baseCase$time_points,
-        event_prior_distribution = baseCase$event_prior_distribution,
-        dropout_prior_distribution = baseCase$dropout_prior_distribution,        
-        enrollment_prior_distribution = baseCase$enrollment_prior_distribution,        
-        nsims = baseCase$nsims
-      )
-    ),
-    info = "Checking for missing future time points for computing event predictions"
-  )
+  testParameterErrors = function(params, paramName, paramDesc, 
+    checkMissing = TRUE, checkSize = TRUE, checkMin = NA, checkMax = NA) {
+
+    func = EventPred
+
+    paramDesc = paste0(paramDesc, " (", paramName, ")")
+    if (!is.null(params$endpoint_type)) 
+      paramDesc = paste0(params$endpoint_type, ": ", paramDesc)
+    # Missing
+    if (checkMissing) {
+      testParams = params
+      testParams[paramName] <- NULL
+      expect_error(func(testParams), 
+        info = paste0("Checking for missing ", paramDesc))
+    }
+    # Check size
+    if (checkSize) {
+      testParams = params
+      testParams[[paramName]] <- append(testParams[[paramName]], testParams[[paramName]][1])
+      expect_error(func(testParams), 
+        info = paste0("Checking for wrong ", paramDesc, " (incorrect value size)"))
+    }
+    # Check below min value
+    # if (!is.null(checkMin) && !is.na(checkMin)) {
+    if (!is.null(checkMin) && !anyNA(checkMin, recursive = FALSE)) {
+      testParams = params
+      testParams[[paramName]][1] <- checkMin
+      expect_error(func(testParams), 
+        info = paste0("Checking for wrong ", paramDesc, " (incorrect value < min)"))
+    }
+    # Check under max value
+    if (!is.null(checkMax) && !is.na(checkMax)) {
+      testParams = params
+      testParams[[paramName]][length(testParams[[paramName]])] <- checkMax
+      expect_error(func(testParams), 
+        info = paste0("Checking for wrong ", paramDesc, " (incorrect value > max)"))
+    }
+  }
+
+  # Prepare test values
+  data_set = baseCase$data_set
+  time_points = baseCase$time_points
+  interim_analysis = max(data_set$enrollment + data_set$time)
+  interim_analysis_lower_min = interim_analysis - 0.01
+  time_points[1] = interim_analysis_lower_min
+
+  testParameterErrors(baseCase, 
+    'time_points', 
+    'Future time points for computing event predictions',
+    checkMissing = TRUE,
+    checkSize = FALSE,
+    checkMin = time_points,
+    checkMax = NA)
+
+  testParameterErrors(baseCase, 
+    'event_prior_distribution', 
+    'Prior distribution for the event hazard rate',
+    checkMissing = TRUE,
+    checkSize = TRUE,
+    checkMin = c(0,0),
+    checkMax = NA)
+
+  testParameterErrors(baseCase, 
+    'dropout_prior_distribution', 
+    'Prior distribution for the patient dropout hazard rate',
+    checkMissing = TRUE,
+    checkSize = TRUE,
+    checkMin = c(0,0),
+    checkMax = NA)
+
+  testParameterErrors(baseCase, 
+    'enrollment_prior_distribution', 
+    'Prior distribution for the enrollment hazard rate',
+    checkMissing = TRUE,
+    checkSize = TRUE,
+    checkMin = c(0,0),
+    checkMax = NA)
+
+  testParameterErrors(baseCase, 
+    'nsims', 
+    'Number of simulations',
+    checkMissing = FALSE,
+    checkSize = TRUE,
+    checkMin = 0,
+    checkMax = 10001)
+
+})
+
+test_that("Input parameters errors check EventPredReport", {
 
   expect_error(
-    EventPred(
-      list(
-        data_set = baseCase$data_set,
-        time_points = baseCase$time_points,
-        # missing
-        #event_prior_distribution = baseCase$event_prior_distribution,
-        dropout_prior_distribution = baseCase$dropout_prior_distribution,        
-        enrollment_prior_distribution = baseCase$enrollment_prior_distribution,        
-        nsims = baseCase$nsims
-      )
-    ),
-    info = "Checking for missing prior distribution for the event hazard rate"
-  )
-
-  expect_error(
-    EventPred(
-      list(
-        data_set = baseCase$data_set,
-        time_points = baseCase$time_points,
-        event_prior_distribution = baseCase$event_prior_distribution,
-        # missing
-        #dropout_prior_distribution = baseCase$dropout_prior_distribution,        
-        enrollment_prior_distribution = baseCase$enrollment_prior_distribution,        
-        nsims = baseCase$nsims
-      )
-    ),
-    info = "Checking for missing prior distribution for the patient dropout hazard rate"
-  )
-
-  expect_error(
-    EventPred(
-      list(
-        data_set = baseCase$data_set,
-        time_points = baseCase$time_points,
-        event_prior_distribution = baseCase$event_prior_distribution,
-        dropout_prior_distribution = baseCase$dropout_prior_distribution,        
-        # missing
-        #enrollment_prior_distribution = baseCase$enrollment_prior_distribution,        
-        nsims = baseCase$nsims
-      )
-    ),
-    info = "Checking for missing prior distribution for the patient enrollment hazard rate"
+    EventPredReportDoc(""),
+    info = "Checking for wrong parameter type for report generator"
   )
 
 })

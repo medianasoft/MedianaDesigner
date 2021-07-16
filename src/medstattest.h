@@ -38,7 +38,7 @@ TestResult PropTest(const vector<double> &x, const vector<double> &y, const doub
     if (direction == 2) stat = - stat;
 
     if (std::isnan(stat)) {
-        stat = -3.0;
+        stat = -3.0;        // # nocov
     }
 
     TestResult res;
@@ -88,7 +88,7 @@ TestResult TTest(const vector<double> &x, const vector<double> &y, const double 
     TestResult res;
 
     if (std::isnan(stat)) {
-        stat = -3.0;
+        stat = -3.0;        // # nocov
     }
 
     // One-sided p-value based on a t distribution
@@ -173,10 +173,10 @@ TestResult CoreLogrankTest(const std::vector<double> &xv, const std::vector<doub
                 cens1[curit]+=vec[i].cens;
             }
             else
-            {
+            {   // # nocov start
                 m2[curit] += 1-vec[i].cens;
                 cens2[curit] += (int)vec[i].cens;
-            }
+            }   // # nocov end
         }
         ++curit;
     }
@@ -266,13 +266,13 @@ double FindMilestone(const vector<int> &stratum_list, const vector<int> &stratum
         sort(vec.begin(), vec.end());
 
         if (target > vec.size()) {
-            milestone = vec.back();
+            milestone = vec.back();     // # nocov
         } else {        
             milestone = vec[target - 1];
         }
 
     } else {
-        milestone = 10000.0;        
+        milestone = 10000.0;            // # nocov 
     }
 
 
@@ -343,6 +343,7 @@ double CombFunctionTestStat(const double &test_stat1, const double &test_stat2, 
 
 }
 
+// # nocov start
 vector<double> MarginalCombTest(const double &p1, const double &p2, const int &test) {
 
     vector<double> adjusted_pvalue(2);
@@ -371,6 +372,6 @@ double IntersectionPvalue(const double &p1, const double &p2, const int &test) {
     return intersection_pvalue;
 
 }
-
+// # nocov end
 
 #endif // MEDSTATTEST_H

@@ -42,6 +42,10 @@ shinyServer(function(input, output, session) {
       parameters$enrollment_parameter = as.numeric(input$enrollment_parameter)   
     }
  
+    direction_index = as.numeric(input$direction_index)
+    if (direction_index == 1) parameters$direction = "Higher"
+    if (direction_index == 2) parameters$direction = "Lower"
+
     parameters$dropout_rate = as.numeric(input$dropout_rate / 100)
 
     parameters$futility_threshold = as.numeric(input$futility_threshold / 100)

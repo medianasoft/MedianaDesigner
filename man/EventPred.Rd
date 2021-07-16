@@ -10,7 +10,6 @@ This function performs event forecasting in trials with an event-driven design. 
 }
 \usage{
 EventPred(parameters)
-
 }
 \arguments{
   \item{parameters}{List of the trial design and other parameters. The required elements are defined below: 

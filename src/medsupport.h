@@ -27,6 +27,7 @@ vector<int> FillTreatmentIndicators(const vector<int> &n) {
     return result;  
 }
 
+// # nocov start
 // Extract a row
 vector<double> ExtractRow(const NumericMatrix &mat, const int &index) {
 
@@ -69,6 +70,7 @@ double Sign(const double &x) {
     return res;
 
 }
+// # nocov end
 
 double sum(const vector<double> &vec) {
     int i, m = vec.size();
@@ -91,6 +93,7 @@ int SumVecInt(const vector<int> &vec) {
     return sum;
 }
 
+// # nocov start
 vector<double> AddVec(const vector<double> &x, const vector<double> &y) {
     int i, m = x.size();
     vector<double> sum(m);
@@ -112,6 +115,6 @@ vector<double> ComputeAverage(vector<double> &vec, const int &nsims) {
     return ave;  
 
 }
-
+// # nocov end
 
 #endif // MEDSUPPORT_H

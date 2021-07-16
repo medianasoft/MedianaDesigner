@@ -27,7 +27,7 @@ shinyUI(
 
           fluidRow(
             box(
-              title = "Adaptive design with sample size or event count re-estimation",
+              title = "Adaptive design with data-driven treatment selection",
               solidHeader = FALSE,
               collapsible = FALSE,
               width = 12,
@@ -104,8 +104,10 @@ shinyUI(
                 width = NULL,
                 
                 selectInput("endpoint_index", label = "Primary endpoint's type",
-                          c("Normal" = 1, "Binary" = 2, "Time-to-event" = 3))
+                          c("Normal" = 1, "Binary" = 2, "Time-to-event" = 3)),
 
+                selectInput("direction_index", label = "Direction of favorable outcome",
+                          c("Higher" = 1, "Lower" = 2))
 
               )
             ),

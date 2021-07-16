@@ -98,8 +98,10 @@ shinyUI(
                 width = NULL,
                 
                 selectInput("endpoint_index", label = "Primary endpoint's type",
-                          c("Normal" = 1, "Binary" = 2, "Time-to-event" = 3))
+                          c("Normal" = 1, "Binary" = 2, "Time-to-event" = 3)),
 
+                selectInput("direction_index", label = "Direction of favorable outcome",
+                          c("Higher" = 1, "Lower" = 2))
 
               )
             ),

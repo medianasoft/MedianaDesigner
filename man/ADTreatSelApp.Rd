@@ -6,6 +6,8 @@ Graphical user interface to design an adaptive trial with data-driven treatment 
 \description{
 This function creates a web application with a Shiny-based graphical user interface to facilitate the process of designing Phase III adaptive trials with two interim analysis to enable a futility assessment and data-driven selection of the best treatment arm. The application supports the same functionality as the \code{\link{ADTreatSel}} function. For an example of the function call, see \link{ADTreatSelExample1}.
 }
+\arguments{No arguments}
+\value{No return value, called for side effects}
 \usage{
 ADTreatSelApp()
 }

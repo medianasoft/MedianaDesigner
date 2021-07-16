@@ -8,6 +8,15 @@ ADTreatSel = function(parameters) {
 
   if (!tolower(parameters$endpoint_type) %in% tolower(endpoint_list)) stop("Endpoint type (endpoint_type): Value must be Normal, Binary or Time-to-event.", call. = FALSE)
 
+  if (is.null(parameters$direction)) {
+        parameters$direction_index = 1
+  } else {
+        if (!tolower(parameters$direction) %in% c("higher", "lower")) stop("Direction of favorable outcome (direction): Value must be specified.", call. = FALSE)
+  }
+
+  if (tolower(parameters$direction) == "higher") parameters$direction_index = 1    
+  if (tolower(parameters$direction) == "lower") parameters$direction_index = 2    
+
   parameters$endpoint_index = 1  
 
   for (i in 1:length(endpoint_list)) {
@@ -453,6 +462,25 @@ ADTreatSelReportDoc = function(results) {
   item_index = item_index + 1
   table_index = table_index + 1
 
+  #############################################################################
+
+  column_names = c("Population", "Value")
+
+  if (parameters$direction_index == 1) label = "A higher value of the endpoint indicates a more favorable outcome"
+
+  if (parameters$direction_index == 2) label = "A lower value of the endpoint indicates a more favorable outcome"
+
+  col1 = c("Endpoint type", "Direction of favorable outcome") 
+  col2 = c(endpoint_list[endpoint_index], label)
+
+  data_frame = data.frame(col1, col2)
+  title = paste0("Table ", table_index, ". Primary efficacy endpoint")
+
+  column_width = c(3, 3.5)
+  item_list[[item_index]] = CreateTable(data_frame, column_names, column_width, title, FALSE)
+  item_index = item_index + 1
+  table_index = table_index + 1
+  
   #############################################################################
 
   column_names = c("Trial arm", "Parameter", "Value")

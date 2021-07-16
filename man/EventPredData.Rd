@@ -5,6 +5,8 @@
 \description{
 Example data set based on a Phase III oncology trial with an overall survival endpoint to illustrate event prediction in event-driven trials.
 }
+\arguments{No arguments}
+\value{No return value}
 \usage{data(EventPredData)}
 \format{
   A data set with 150 records (one record per patient) and 4 variables:

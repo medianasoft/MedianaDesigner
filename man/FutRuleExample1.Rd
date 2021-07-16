@@ -4,7 +4,7 @@
 Simulation-based selection of an optimal futility stopping rule (normally distributed endpoint)
 }
 \description{
-Consider a multi-arm Phase II or Phase III trial with a single interim analysis and assume that the primary efficacy endpoint is normally distributed. A futility assessment will be performed for each treatment arm at this interim look using the predicted probability of success (conditional power). A treatment arm will be dropped at this decision point if conditional power is below a pre-defined threshold. An optimal value of this futility threshold can be found by computing the sensitivity and specificity rates associated with the futility stopping rule and then identifying the threshold that simultaneously maximizes both rates.
+Consider a multi-arm Phase II or Phase III trial with a single interim analysis and assume that the primary efficacy endpoint is normally distributed and a larger value indicates to a more favorable outcome. A futility assessment will be performed for each treatment arm at this interim look using the predicted probability of success (conditional power). A treatment arm will be dropped at this decision point if conditional power is below a pre-defined threshold. An optimal value of this futility threshold can be found by computing the sensitivity and specificity rates associated with the futility stopping rule and then identifying the threshold that simultaneously maximizes both rates.
 
 The following design parameters will be assumed in the trial:
 \itemize{
@@ -20,6 +20,8 @@ The calculations will be performed under the following set of treatment effect a
 
 Operating characteristics of the futility stopping rule such as the sensitivity and specificity rates as well as an optimal futility threshold will be computed using the \code{\link{FutRule}} function based on 1,000 simulation runs. A list of all trial design parameters (\code{parameters}) needs to be set up as shown below and passed to this function. A detailed simulation report can be generated using the \code{\link{GenerateReport}} function and a graphical user interface can be launched by calling the \code{\link{FutRuleApp}} function.
 }
+\arguments{No arguments}
+\value{No return value}
 \seealso{
   \code{\link{FutRule}}, \code{\link{FutRuleExample2}}, \code{\link{FutRuleExample3}}
 }
@@ -32,6 +34,9 @@ parameters$endpoint_type = "Normal"
 
 # Number of enrolled patients (control, two treatments)
 parameters$sample_size = c(100, 100, 100)
+
+# Direction of favorable outcome
+parameters$direction = "Higher"
 
 # Patient dropout rate
 parameters$dropout_rate = 0.05

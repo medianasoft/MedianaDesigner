@@ -1,5 +1,3 @@
-options("scipen" = 100, "digits" = 4, warn = -1)
-
 require(devEMF)
 require(officer)
 require(flextable)
@@ -72,7 +70,7 @@ ContinuousErrorCheck = function(parameter, n_values, lower_values, lower_values_
             }
         }
 
-        if (type == "integer") {
+        if (type == "integer" || type == "int") {
 
             if (!is.wholenumber(parameter[i])) {
                 error_message = paste0(parameter_name, ": ", component_name[i], " must be an integer.") 
@@ -140,6 +138,7 @@ ContinuousErrorCheck = function(parameter, n_values, lower_values, lower_values_
     return(parameter)
 }
 
+# nocov start
 
 ConvertFromCPToHR = function(cp, n_interim, n_final, alpha) {
 
@@ -155,6 +154,8 @@ ConvertFromCPToHR = function(cp, n_interim, n_final, alpha) {
   return(hr)
 
 }
+
+# nocov end
 
 SaveReport = function(report, report_title) {
 
@@ -311,15 +312,64 @@ ReportDoc = function(results) {
 # Generate and print function-specific simulation reports 
 GenerateReport = function(results, report_filename) {
 
-  if (class(results) == "ADSSModResults") doc = ADSSModReportDoc(results)
-  if (class(results) == "ADTreatSelResults") doc = ADTreatSelReportDoc(results)
-  if (class(results) == "ADPopSelResults") doc = ADPopSelReportDoc(results)
-  if (class(results) == "FutRuleResults") doc = FutRuleReportDoc(results)
-  if (class(results) == "EventPredResults") doc = EventPredReportDoc(results)
-
   # Print the report
-  print(doc, target = report_filename)          
+  print(ReportDoc(results), target = report_filename)          
 
 }
 # End of ReportDoc       
+
+#' Print method for ADSSModResults
+#'
+#' @param x ADSSModResults object
+#' @param ... Arguments passed to or from other methods
+#'
+#' @export
+#' @exportS3Method
+print.ADSSModResults = function (x, ...) {
+  cat("Use the GenerateReport function to create a detailed simulation report.\n")
+}
+
+#' Print method for ADTreatSelResults
+#'
+#' @param x ADTreatSelResults object
+#' @param ... Arguments passed to or from other methods
+#'
+#' @export
+#' @exportS3Method
+print.ADTreatSelResults = function (x, ...) {
+  cat("Use the GenerateReport function to create a detailed simulation report.\n")
+}
+
+#' Print method for ADPopSelResults
+#'
+#' @param x ADPopSelResults object
+#' @param ... Arguments passed to or from other methods
+#'
+#' @export
+#' @exportS3Method
+print.ADPopSelResults = function (x, ...) {
+  cat("Use the GenerateReport function to create a detailed simulation report.\n")
+}
+
+#' Print method for FutRuleResults
+#'
+#' @param x FutRuleResults object
+#' @param ... Arguments passed to or from other methods
+#'
+#' @export
+#' @exportS3Method
+print.FutRuleResults = function (x, ...) {
+  cat("Use the GenerateReport function to create a detailed simulation report.\n")
+}
+
+#' Print method for EventPredResults
+#'
+#' @param x EventPredResults object
+#' @param ... Arguments passed to or from other methods
+#'
+#' @export
+#' @exportS3Method
+print.EventPredResults = function (x, ...) {
+  cat("Use the GenerateReport function to create a detailed simulation report.\n")
+}
 

@@ -1,8 +1,9 @@
 // Supportive functions
-// # nocov start
 
 #ifndef MEDDEBUG_H
 #define MEDDEBUG_H
+
+// # nocov start
 
 void printVectorDouble(const string &label, const vector<double> &vec) {
 
@@ -48,5 +49,6 @@ void printMatrixDouble(const string &label, const NumericMatrix &mat) {
 
 }
 
-#endif // MEDDEBUG_H
 // # nocov end
+
+#endif // MEDDEBUG_H

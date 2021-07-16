@@ -1,0 +1,12 @@
+2021-02-22 Version 0.1
+First release of the package with the initial implementation of five modules:
+- Adaptive designs with data-driven sample size or event count re-estimation (ADSSMod function).
+- Adaptive designs with data-driven treatment selection (ADTreatSel function).
+- Adaptive designs with data-driven population selection (ADPopSel function).
+- Optimal selection of a futility stopping rule (FutRule function).
+- Event prediction in event-driven trials (EventPred function).
+
+2021-07-15 Version 0.2
+Fixed minor bugs and added the following features:
+- Enabled 100% test coverage
+- Added the "direction" parameter (direction of favorable outcome) to the ADSSMod, ADTreatSel, ADPopSel and FutRule functions 

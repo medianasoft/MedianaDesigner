@@ -9,7 +9,6 @@ This function performs a simulation-based evaluation of operating characteristic
 }
 \usage{
 ADSSMod(parameters)
-
 }
 \arguments{
   \item{parameters}{List of the trial design and other parameters. The required elements are defined below: 
@@ -21,6 +20,7 @@ ADSSMod(parameters)
       \item \code{"Time-to-event"}: Time-to-event endpoint.
     }
     }
+    \item \code{direction}{: Character value defining the direction of favorable outcome. Possible values: \code{"Higher"} (a higher value of the endpoint indicates a more favorable outcome) and \code{"Lower"} (a lower value of the endpoint indicates a more favorable outcome).}    
     \item \code{sample_size}{: Integer vector with two elements defining the number of enrolled patients in the two trial arms (control and experimental treatment). Each element must be positive.}
     \item \code{control_mean}{: Numeric value defining the mean of the primary endpoint in the control arm. This parameter is required only with normally distributed endpoints (\code{endpoint_type="Normal"}).}
     \item \code{control_sd}{: Numeric value defining the standard deviation of the primary endpoint in the control arm. This value must be positive. This parameter is required only with normally distributed endpoints.}

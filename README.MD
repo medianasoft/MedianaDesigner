@@ -1,6 +1,11 @@
 # MedianaDesigner 
 
-## Efficient simulation-based power and sample size calculations for a broad class of late-stage clinical trials
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/medianasoft/MedianaDesignerPrivate/workflows/R-CMD-check/badge.svg?branch=master)](https://github.com/medianasoft/MedianaDesignerPrivate/actions)
+[![codecov](https://codecov.io/gh/medianasoft/MedianaDesignerPrivate/branch/master/graph/badge.svg?token=NwvPou45uf)](https://codecov.io/gh/medianasoft/MedianaDesignerPrivate)
+<!-- badges: end -->
+
+## Efficient Simulation-Based Power and Sample Size Calculations for a Broad Class of Late-Stage Clinical Trials
 
 This package provides efficient simulation-based tools for adaptive designs commonly used in Phase III and seamless Phase II/III trials. The following modules are currently included in the package:
 
@@ -10,7 +15,9 @@ This package provides efficient simulation-based tools for adaptive designs comm
 * Optimal selection of a futility stopping rule (FutRule function).
 * Event prediction in event-driven trials (EventPred function).
 
-For more information on this package, visit [Mediana's web site](http://www.mediana.us/free-software). The technical manuals with a detailed description of the statistical methodology implemented in each module can also be found on Mediana's web site: 
+For more information on this package, visit [Mediana's web site](http://www.mediana.us/free-software). The latest stable version of the package can be downloaded from [CRAN](https://cran.r-project.org/web/packages/MedianaDesigner/index.html). 
+
+The technical manuals with a detailed description of the statistical methodology implemented in each module can also be found on Mediana's web site: 
 
 * [Adaptive designs with data-driven sample size or event count re-estimation](http://www.mediana.us/MedianaDesigner/ADSSMod.pdf).
 * [Adaptive designs with data-driven treatment selection](http://www.mediana.us/MedianaDesigner/ADTreatSel.pdf).

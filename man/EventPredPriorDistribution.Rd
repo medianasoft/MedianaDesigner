@@ -8,7 +8,6 @@ This function can be used for calculating the parameters of prior gamma distribu
 }
 \usage{
 EventPredPriorDistribution(expected, uncertainty)
-
 }
 \arguments{
   \item{expected}{Numeric value defining the expected value of the event hazard rate, patient dropout hazard rate or patient enrollment rate. This value must be positive.}

@@ -7,7 +7,7 @@ using namespace Rcpp;
 #include "medsupport.h"
 #include "meddist.h"
 #include "medstattest.h"
-#include "meddebug.h"
+//#include "meddebug.h"
 
 #include <exception>
 #include <memory>
@@ -106,7 +106,7 @@ MeanSD ComputeMeanSD(const std::vector<double> &x) {
 
 }
 
-double ComputeEffectSize(const std::vector<double> &sample1, const std::vector<double> &sample2, const int &endpoint_distribution, const int &endpoint_test) {
+double ComputeEffectSize(const std::vector<double> &sample1, const std::vector<double> &sample2, const int &endpoint_distribution, const int &endpoint_test, const int &direction) {
 
     double effect_size = 0.0;
     double n1 = sample1.size();
@@ -122,6 +122,7 @@ double ComputeEffectSize(const std::vector<double> &sample1, const std::vector<d
         pooled_sd = sqrt(((n1-1.0) * MeanSD1.sd * MeanSD1.sd  + (n2-1.0) * MeanSD2.sd * MeanSD2.sd) / (n1 + n2 - 2.0));
 
         effect_size = (MeanSD2.mean - MeanSD1.mean) / pooled_sd;
+        if (direction == 2) effect_size = -effect_size;
 
     }
 
@@ -133,10 +134,12 @@ double ComputeEffectSize(const std::vector<double> &sample1, const std::vector<d
         double ave = (estimatex+estimatey)/2.0;
 
         // Without pooled variance
-        if (endpoint_test == 1) effect_size = abs(estimatey - estimatex) / sqrt(estimatex*(1.0-estimatex)+ estimatey*(1.0-estimatey)); 
+        if (endpoint_test == 1) effect_size = (estimatey - estimatex) / sqrt(estimatex*(1.0-estimatex)+ estimatey*(1.0-estimatey)); 
 
         // With pooled variance
-        if (endpoint_test == 2) effect_size = abs(estimatey - estimatex) / sqrt(ave*(1.0-ave)); 
+        if (endpoint_test == 2) effect_size = (estimatey - estimatex) / sqrt(ave*(1.0-ave)); 
+
+        if (direction == 2) effect_size = -effect_size;
 
     }
 
@@ -214,7 +217,7 @@ int UpdatedEventCount(const double &test_stat, const int &n_interim, const int &
     } 
     else {
 
-        n = 0;
+        n = 0;      // # nocov
 
     }
 
@@ -252,7 +255,7 @@ vector<double> HypothesisSelection(const double &effect_size_minus, const double
     } else {
 
         // Both populations are always selected if the interaction condition is not specified
-        outcome3 = 1.0;
+        outcome3 = 1.0;     // # nocov
 
     }
 
@@ -291,6 +294,7 @@ List ADSSModC(const List &parameters_arg) {
     vector<double> dropout_parameter = as<vector<double>>(parameters["dropout_parameter"]);
 
     int endpoint_index = as<int>(parameters["endpoint_index"]);
+    int direction_index = as<int>(parameters["direction_index"]);
 
     vector<double> means = as<vector<double>>(parameters["means"]);
     vector<double> sds = as<vector<double>>(parameters["sds"]);
@@ -372,8 +376,8 @@ List ADSSModC(const List &parameters_arg) {
             control_sample = ExtractSamples(overall_control_sample, 0, sample_size_fa1[0]);
             treatment_sample = ExtractSamples(overall_treatment_sample, 0, sample_size_fa1[1]);
 
-            if (endpoint_index == 1) test_result1 = TTest(control_sample, treatment_sample, 0.0, 1);
-            if (endpoint_index == 2) test_result1 = PropTest(control_sample, treatment_sample, 0.0, 1);
+            if (endpoint_index == 1) test_result1 = TTest(control_sample, treatment_sample, 0.0, direction_index);
+            if (endpoint_index == 2) test_result1 = PropTest(control_sample, treatment_sample, 0.0, direction_index);
 
             pvalue1 = test_result1.pvalue;
 
@@ -384,8 +388,8 @@ List ADSSModC(const List &parameters_arg) {
             control_sample = ExtractSamples(overall_control_sample, 0, sample_size_ia1[0]);
             treatment_sample = ExtractSamples(overall_treatment_sample, 0, sample_size_ia1[1]);
 
-            if (endpoint_index == 1) test_result1 = TTest(control_sample, treatment_sample, 0.0, 1);
-            if (endpoint_index == 2) test_result1 = PropTest(control_sample, treatment_sample, 0.0, 1);
+            if (endpoint_index == 1) test_result1 = TTest(control_sample, treatment_sample, 0.0, direction_index);
+            if (endpoint_index == 2) test_result1 = PropTest(control_sample, treatment_sample, 0.0, direction_index);
 
             // Conditional power
             cp[0] = CondPower(test_result1.test_stat, sample_size_ia1[0] + sample_size_ia1[1], sample_size_fa1[0] + sample_size_fa1[1], 1, 1, 0.0, alpha);
@@ -399,8 +403,8 @@ List ADSSModC(const List &parameters_arg) {
                 control_sample = ExtractSamples(overall_control_sample, 0, sample_size_ia2[0]);
                 treatment_sample = ExtractSamples(overall_treatment_sample, 0, sample_size_ia2[1]);
 
-                if (endpoint_index == 1) test_result1 = TTest(control_sample, treatment_sample, 0.0, 1);
-                if (endpoint_index == 2) test_result1 = PropTest(control_sample, treatment_sample, 0.0, 1);
+                if (endpoint_index == 1) test_result1 = TTest(control_sample, treatment_sample, 0.0, direction_index);
+                if (endpoint_index == 2) test_result1 = PropTest(control_sample, treatment_sample, 0.0, direction_index);
 
                 // Conditional power
                 cp[1] = CondPower(test_result1.test_stat, sample_size_ia2[0] + sample_size_ia2[1], sample_size_fa1[0] + sample_size_fa1[1], 1, 1, 0.0, alpha);
@@ -417,8 +421,8 @@ List ADSSModC(const List &parameters_arg) {
                 control_sample = ExtractSamples(overall_control_sample, 0, sample_size_fa1[0]);
                 treatment_sample = ExtractSamples(overall_treatment_sample, 0, sample_size_fa1[1]);
 
-                if (endpoint_index == 1) test_result2 = TTest(control_sample, treatment_sample, 0.0, 1);
-                if (endpoint_index == 2) test_result2 = PropTest(control_sample, treatment_sample, 0.0, 1);
+                if (endpoint_index == 1) test_result2 = TTest(control_sample, treatment_sample, 0.0, direction_index);
+                if (endpoint_index == 2) test_result2 = PropTest(control_sample, treatment_sample, 0.0, direction_index);
 
                 pvalue2 = test_result2.pvalue;
 
@@ -435,8 +439,8 @@ List ADSSModC(const List &parameters_arg) {
                 control_sample = ExtractSamples(overall_control_sample, sample_size_ia2[0], sample_size_ia2[0] + (int) (ratio * sample_size_increase));
                 treatment_sample = ExtractSamples(overall_treatment_sample, sample_size_ia2[1], sample_size_ia2[1] + (int) ((1.0 - ratio) * sample_size_increase));
 
-                if (endpoint_index == 1) test_result2 = TTest(control_sample, treatment_sample, 0.0, 1);
-                if (endpoint_index == 2) test_result2 = PropTest(control_sample, treatment_sample, 0.0, 1);
+                if (endpoint_index == 1) test_result2 = TTest(control_sample, treatment_sample, 0.0, direction_index);
+                if (endpoint_index == 2) test_result2 = PropTest(control_sample, treatment_sample, 0.0, direction_index);
 
                 // Stagewise test statistics
                 stage1_test = test_result1.test_stat;
@@ -510,7 +514,7 @@ List ADSSModC(const List &parameters_arg) {
             stratum_list.push_back(1);
             outcome_censor_treatment = ExtractOutcomeCensor(stratum_list, survival_data.stratum, survival_data.start, survival_data.os_local, survival_data.os_local_censor, look_time[0]);
 
-            test_result1 = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, 1);
+            test_result1 = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, direction_index);
 
             pvalue1 = test_result1.pvalue;
 
@@ -533,7 +537,7 @@ List ADSSModC(const List &parameters_arg) {
             stratum_list.push_back(1);
             outcome_censor_treatment = ExtractOutcomeCensor(stratum_list, survival_data.stratum, survival_data.start, survival_data.os_local, survival_data.os_local_censor, look_time[0]);
 
-            test_result1 = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, 1);
+            test_result1 = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, direction_index);
             event_count[0] = EventCount(outcome_censor_control, outcome_censor_treatment);
             hr[0] = HazardRatio(outcome_censor_control, outcome_censor_treatment); 
 
@@ -561,7 +565,7 @@ List ADSSModC(const List &parameters_arg) {
                 stratum_list.push_back(1);
                 outcome_censor_treatment = ExtractOutcomeCensor(stratum_list, survival_data.stratum, survival_data.start, survival_data.os_local, survival_data.os_local_censor, look_time[1]);
 
-                test_result1 = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, 1);
+                test_result1 = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, direction_index);
                 event_count[1] = EventCount(outcome_censor_control, outcome_censor_treatment);
                 hr[1] = HazardRatio(outcome_censor_control, outcome_censor_treatment); 
 
@@ -592,7 +596,7 @@ List ADSSModC(const List &parameters_arg) {
                 stratum_list.push_back(1);
                 outcome_censor_treatment = ExtractOutcomeCensor(stratum_list, survival_data.stratum, survival_data.start, survival_data.os_local, survival_data.os_local_censor, look_time[2]);
 
-                test_result2 = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, 1);
+                test_result2 = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, direction_index);
                 event_count[2] = EventCount(outcome_censor_control, outcome_censor_treatment);
                 hr[2] = HazardRatio(outcome_censor_control, outcome_censor_treatment); 
 
@@ -623,7 +627,7 @@ List ADSSModC(const List &parameters_arg) {
                 stratum_list.push_back(1);
                 outcome_censor_treatment = ExtractOutcomeCensor(stratum_list, survival_data.stratum, survival_data.start, survival_data.os_local, survival_data.os_local_censor, look_time[2]);
 
-                test_result2 = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, 1);
+                test_result2 = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, direction_index);
                 event_count[2] = EventCount(outcome_censor_control, outcome_censor_treatment);
                 hr[2] = HazardRatio(outcome_censor_control, outcome_censor_treatment); 
 
@@ -696,6 +700,7 @@ List ADTreatSelC(const List &parameters_arg) {
     vector<double> dropout_parameter = as<vector<double>>(parameters["dropout_parameter"]);
 
     int endpoint_index = as<int>(parameters["endpoint_index"]);
+    int direction_index = as<int>(parameters["direction_index"]);
 
     vector<double> means = as<vector<double>>(parameters["means"]);
     vector<double> sds = as<vector<double>>(parameters["sds"]);
@@ -777,8 +782,8 @@ List ADTreatSelC(const List &parameters_arg) {
                 treatment_sample.clear();
                 for (j = 0; j < sample_size_ia1[i + 1]; j++) treatment_sample.push_back(overall_treatment_sample(i, j));
 
-                if (endpoint_index == 1) test_result = TTest(control_sample, treatment_sample, 0.0, 1);
-                if (endpoint_index == 2) test_result = PropTest(control_sample, treatment_sample, 0.0, 1);
+                if (endpoint_index == 1) test_result = TTest(control_sample, treatment_sample, 0.0, direction_index);
+                if (endpoint_index == 2) test_result = PropTest(control_sample, treatment_sample, 0.0, direction_index);
 
                 // Conditional power
                 cp1[i] = CondPower(test_result.test_stat, sample_size_ia1[0] + sample_size_ia1[i + 1], sample_size_fa[0] + sample_size_fa[i + 1], 1, 1, 0.0, alpha);
@@ -787,9 +792,6 @@ List ADTreatSelC(const List &parameters_arg) {
                 futility_flag[i] = (cp1[i] <= futility_threshold);
 
             }
-
-// printVectorDouble("cp1", cp1);
-// printVectorInt("futility_flag", futility_flag);
 
             // Interim analysis 2
 
@@ -800,8 +802,8 @@ List ADTreatSelC(const List &parameters_arg) {
                 treatment_sample.clear();
                 for (j = 0; j < sample_size_ia2[i + 1]; j++) treatment_sample.push_back(overall_treatment_sample(i, j));
 
-                if (endpoint_index == 1) test_result = TTest(control_sample, treatment_sample, 0.0, 1);
-                if (endpoint_index == 2) test_result = PropTest(control_sample, treatment_sample, 0.0, 1);
+                if (endpoint_index == 1) test_result = TTest(control_sample, treatment_sample, 0.0, direction_index);
+                if (endpoint_index == 2) test_result = PropTest(control_sample, treatment_sample, 0.0, direction_index);
 
                 // Conditional power
                 cp2[i] = CondPower(test_result.test_stat, sample_size_ia2[0] + sample_size_ia2[i + 1], sample_size_fa[0] + sample_size_fa[i + 1], 1, 1, 0.0, alpha);
@@ -814,9 +816,6 @@ List ADTreatSelC(const List &parameters_arg) {
 
             }
 
-// printVectorDouble("cp2", cp2);
-// cerr<<"select_flag: "<<select_flag<<endl;
-
             // Final analysis
 
             if (select_flag > -1) {
@@ -826,8 +825,8 @@ List ADTreatSelC(const List &parameters_arg) {
                 treatment_sample.clear();
                 for (j = 0; j < sample_size_fa[select_flag + 1]; j++) treatment_sample.push_back(overall_treatment_sample(select_flag, j));
 
-                if (endpoint_index == 1) test_result = TTest(control_sample, treatment_sample, 0.0, 1);
-                if (endpoint_index == 2) test_result = PropTest(control_sample, treatment_sample, 0.0, 1);
+                if (endpoint_index == 1) test_result = TTest(control_sample, treatment_sample, 0.0, direction_index);
+                if (endpoint_index == 2) test_result = PropTest(control_sample, treatment_sample, 0.0, direction_index);
 
                 ad_outcome = (test_result.pvalue <= alpha / (narms - 1.0));        
 
@@ -842,8 +841,8 @@ List ADTreatSelC(const List &parameters_arg) {
                 treatment_sample.clear();
                 for (j = 0; j < sample_size_fa[i + 1]; j++) treatment_sample.push_back(overall_treatment_sample(i, j));
 
-                if (endpoint_index == 1) test_result = TTest(control_sample, treatment_sample, 0.0, 1);
-                if (endpoint_index == 2) test_result = PropTest(control_sample, treatment_sample, 0.0, 1);
+                if (endpoint_index == 1) test_result = TTest(control_sample, treatment_sample, 0.0, direction_index);
+                if (endpoint_index == 2) test_result = PropTest(control_sample, treatment_sample, 0.0, direction_index);
 
                 pvalue_trad[i] = test_result.pvalue;
 
@@ -908,7 +907,7 @@ List ADTreatSelC(const List &parameters_arg) {
                 stratum_list.clear();
                 stratum_list.push_back(i + 1);
                 outcome_censor_treatment = ExtractOutcomeCensor(stratum_list, survival_data.stratum, survival_data.start, survival_data.os_local, survival_data.os_local_censor, look_time[0]);
-                test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, 1);
+                test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, direction_index);
 
                 // Conditional power
                 cp1[i] = CondPower(test_result.test_stat, event_count_ia1, event_count_fa, 1, 1, 0.0, alpha);
@@ -935,7 +934,7 @@ List ADTreatSelC(const List &parameters_arg) {
                 stratum_list.clear();
                 stratum_list.push_back(i + 1);
                 outcome_censor_treatment = ExtractOutcomeCensor(stratum_list, survival_data.stratum, survival_data.start, survival_data.os_local, survival_data.os_local_censor, look_time[1]);
-                test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, 1);
+                test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, direction_index);
 
                 // Conditional power
                 cp2[i] = CondPower(test_result.test_stat, event_count_ia2, event_count_fa, 1, 1, 0.0, alpha);
@@ -966,7 +965,7 @@ List ADTreatSelC(const List &parameters_arg) {
                 stratum_list.push_back(select_flag + 1);
                 outcome_censor_treatment = ExtractOutcomeCensor(stratum_list, survival_data.stratum, survival_data.start, survival_data.os_local, survival_data.os_local_censor, look_time[2]);
     
-                test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, 1);
+                test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, direction_index);
 
                 ad_outcome = (test_result.pvalue <= alpha / (narms - 1.0));        
 
@@ -986,7 +985,7 @@ List ADTreatSelC(const List &parameters_arg) {
                 stratum_list.push_back(i + 1);
                 outcome_censor_treatment = ExtractOutcomeCensor(stratum_list, survival_data.stratum, survival_data.start, survival_data.os_local, survival_data.os_local_censor, look_time[2]);
     
-                test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, 1);
+                test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, direction_index);
 
                 pvalue_trad[i] = test_result.pvalue;
 
@@ -1035,6 +1034,7 @@ List ADPopSelC(const List &parameters_arg) {
 
     int endpoint_index = as<int>(parameters["endpoint_index"]);
     int max_sample_size = as<int>(parameters["max_sample_size"]);
+    int direction_index = as<int>(parameters["direction_index"]);
 
     vector<double> means = as<vector<double>>(parameters["means"]);
     vector<double> sds = as<vector<double>>(parameters["sds"]);
@@ -1105,8 +1105,8 @@ List ADPopSelC(const List &parameters_arg) {
             control_sample = CombineVec(ExtractSamples(sample0, 0, sample_size_ia1[0]), ExtractSamples(sample1, 0, sample_size_ia1[1]));
             treatment_sample = CombineVec(ExtractSamples(sample2, 0, sample_size_ia1[2]), ExtractSamples(sample3, 0, sample_size_ia1[3]));
 
-            if (endpoint_index == 1) test_result = TTest(control_sample, treatment_sample, 0.0, 1);
-            if (endpoint_index == 2) test_result = PropTest(control_sample, treatment_sample, 0.0, 1);
+            if (endpoint_index == 1) test_result = TTest(control_sample, treatment_sample, 0.0, direction_index);
+            if (endpoint_index == 2) test_result = PropTest(control_sample, treatment_sample, 0.0, direction_index);
 
             // Conditional power
             cp = CondPower(test_result.test_stat, SumVecInt(sample_size_ia1), SumVecInt(sample_size_fa), 1, 1, 0.0, alpha);
@@ -1121,14 +1121,14 @@ List ADPopSelC(const List &parameters_arg) {
             control_sample = ExtractSamples(sample0, 0, sample_size_ia2[0]);
             treatment_sample = ExtractSamples(sample2, 0, sample_size_ia2[2]);
 
-            effect_size_minus = ComputeEffectSize(control_sample, treatment_sample, endpoint_index, 1);
+            effect_size_minus = ComputeEffectSize(control_sample, treatment_sample, endpoint_index, 1, direction_index);
 
             // Biomarker-positive subpopulation
 
             control_sample = ExtractSamples(sample1, 0, sample_size_ia2[1]);
             treatment_sample = ExtractSamples(sample3, 0, sample_size_ia2[3]);
 
-            effect_size_plus = ComputeEffectSize(control_sample, treatment_sample, endpoint_index, 1);
+            effect_size_plus = ComputeEffectSize(control_sample, treatment_sample, endpoint_index, 1, direction_index);
 
             hypothesis_selection_outcome = HypothesisSelection(effect_size_minus, effect_size_plus, influence, interaction); 
 
@@ -1142,8 +1142,8 @@ List ADPopSelC(const List &parameters_arg) {
                 control_sample = CombineVec(ExtractSamples(sample0, 0, sample_size_fa[0]), ExtractSamples(sample1, 0, sample_size_fa[1]));
                 treatment_sample = CombineVec(ExtractSamples(sample2, 0, sample_size_fa[2]), ExtractSamples(sample3, 0, sample_size_fa[3]));
 
-                if (endpoint_index == 1) test_result = TTest(control_sample, treatment_sample, 0.0, 1);
-                if (endpoint_index == 2) test_result = PropTest(control_sample, treatment_sample, 0.0, 1);
+                if (endpoint_index == 1) test_result = TTest(control_sample, treatment_sample, 0.0, direction_index);
+                if (endpoint_index == 2) test_result = PropTest(control_sample, treatment_sample, 0.0, direction_index);
 
                 ad_outcome[0] = (test_result.pvalue <= alpha && futility_flag < 1.0);
 
@@ -1152,8 +1152,8 @@ List ADPopSelC(const List &parameters_arg) {
                 control_sample = ExtractSamples(sample1, 0, sample_size_fa[1]);
                 treatment_sample = ExtractSamples(sample3, 0, sample_size_fa[3]);
 
-                if (endpoint_index == 1) test_result = TTest(control_sample, treatment_sample, 0.0, 1);
-                if (endpoint_index == 2) test_result = PropTest(control_sample, treatment_sample, 0.0, 1);
+                if (endpoint_index == 1) test_result = TTest(control_sample, treatment_sample, 0.0, direction_index);
+                if (endpoint_index == 2) test_result = PropTest(control_sample, treatment_sample, 0.0, direction_index);
 
                 ad_outcome[1] = (test_result.pvalue <= alpha && futility_flag < 1.0);
 
@@ -1165,10 +1165,10 @@ List ADPopSelC(const List &parameters_arg) {
                 control_sample = ExtractSamples(sample1, 0, sample_size_fa[1]);
                 treatment_sample = ExtractSamples(sample3, 0, sample_size_fa[3]);
 
-                if (endpoint_index == 1) test_result = TTest(control_sample, treatment_sample, 0.0, 1);
-                if (endpoint_index == 2) test_result = PropTest(control_sample, treatment_sample, 0.0, 1);
+                if (endpoint_index == 1) test_result = TTest(control_sample, treatment_sample, 0.0, direction_index);
+                if (endpoint_index == 2) test_result = PropTest(control_sample, treatment_sample, 0.0, direction_index);
 
-                test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, 1);
+                test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, direction_index);
 
                 ad_outcome[1] = (test_result.pvalue <= alpha && futility_flag < 1.0);
 
@@ -1181,18 +1181,17 @@ List ADPopSelC(const List &parameters_arg) {
             control_sample = CombineVec(ExtractSamples(sample0, 0, sample_size_fa[0]), ExtractSamples(sample1, 0, sample_size_fa[1]));
             treatment_sample = CombineVec(ExtractSamples(sample2, 0, sample_size_fa[2]), ExtractSamples(sample3, 0, sample_size_fa[3]));
 
-            if (endpoint_index == 1) test_result = TTest(control_sample, treatment_sample, 0.0, 1);
-            if (endpoint_index == 2) test_result = PropTest(control_sample, treatment_sample, 0.0, 1);
+            if (endpoint_index == 1) test_result = TTest(control_sample, treatment_sample, 0.0, direction_index);
+            if (endpoint_index == 2) test_result = PropTest(control_sample, treatment_sample, 0.0, direction_index);
 
             trad_outcome[0] = (test_result.pvalue <= alpha && futility_flag < 1.0);        
-
             // Biomarker-positive subpopulation
 
             control_sample = ExtractSamples(sample1, 0, sample_size_fa[1]);
             treatment_sample = ExtractSamples(sample3, 0, sample_size_fa[3]);
 
-            if (endpoint_index == 1) test_result = TTest(control_sample, treatment_sample, 0.0, 1);
-            if (endpoint_index == 2) test_result = PropTest(control_sample, treatment_sample, 0.0, 1);
+            if (endpoint_index == 1) test_result = TTest(control_sample, treatment_sample, 0.0, direction_index);
+            if (endpoint_index == 2) test_result = PropTest(control_sample, treatment_sample, 0.0, direction_index);
 
             trad_outcome[1] = (test_result.pvalue <= alpha && futility_flag < 1.0);        
 
@@ -1221,7 +1220,6 @@ List ADPopSelC(const List &parameters_arg) {
                 current_stratum = survival_data.stratum[i];
 
                 survival_data.os[i] = Exponential(1, hazard_rates[current_stratum])[0];    
-
                 survival_data.os_local_censor[i] = 0.0;
 
                 // Local transformation for OS
@@ -1252,7 +1250,7 @@ List ADPopSelC(const List &parameters_arg) {
             stratum_list.push_back(2);
             stratum_list.push_back(3);
             outcome_censor_treatment = ExtractOutcomeCensor(stratum_list, survival_data.stratum, survival_data.start, survival_data.os_local, survival_data.os_local_censor, look_time[0]);
-            test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, 1);
+            test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, direction_index);
             event_count[0] = EventCount(outcome_censor_control, outcome_censor_treatment);
 
             // Conditional power
@@ -1296,8 +1294,15 @@ List ADPopSelC(const List &parameters_arg) {
 
             hr_plus = HazardRatio(outcome_censor_control, outcome_censor_treatment);
 
-            effect_size_minus = -log(hr_minus);
-            effect_size_plus = -log(hr_plus);
+            if (direction_index == 1) {
+                effect_size_minus = -log(hr_minus);
+                effect_size_plus = -log(hr_plus);
+            }
+
+            if (direction_index == 2) {
+                effect_size_minus = log(hr_minus);
+                effect_size_plus = log(hr_plus);
+            }
 
             hypothesis_selection_outcome = HypothesisSelection(effect_size_minus, effect_size_plus, influence, interaction); 
 
@@ -1325,7 +1330,7 @@ List ADPopSelC(const List &parameters_arg) {
                 stratum_list.push_back(3);
                 outcome_censor_treatment = ExtractOutcomeCensor(stratum_list, survival_data.stratum, survival_data.start, survival_data.os_local, survival_data.os_local_censor, look_time[2]);
 
-                test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, 1);
+                test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, direction_index);
 
                 ad_outcome[0] = (test_result.pvalue <= alpha / 2.0 && futility_flag < 1.0);
 
@@ -1350,7 +1355,7 @@ List ADPopSelC(const List &parameters_arg) {
                 outcome_censor_treatment = ExtractOutcomeCensor(stratum_list, survival_data.stratum, survival_data.start, survival_data.os_local, survival_data.os_local_censor, look_time[3]);
                 event_count[3] = EventCount(outcome_censor_control, outcome_censor_treatment);
 
-                test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, 1);
+                test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, direction_index);
 
                 ad_outcome[1] = (test_result.pvalue <= alpha / 2.0 && futility_flag < 1.0);
 
@@ -1378,7 +1383,7 @@ List ADPopSelC(const List &parameters_arg) {
                 stratum_list.push_back(3);
                 outcome_censor_treatment = ExtractOutcomeCensor(stratum_list, survival_data.stratum, survival_data.start, survival_data.os_local, survival_data.os_local_censor, look_time[2]);
 
-                test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, 1);
+                test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, direction_index);
 
                 pvalue[0] = test_result.pvalue;
 
@@ -1395,7 +1400,7 @@ List ADPopSelC(const List &parameters_arg) {
                 outcome_censor_treatment = ExtractOutcomeCensor(stratum_list, survival_data.stratum, survival_data.start, survival_data.os_local, survival_data.os_local_censor, look_time[2]);
                 event_count[2] = EventCount(outcome_censor_control, outcome_censor_treatment);
 
-                test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, 1);
+                test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, direction_index);
 
                 pvalue[1] = test_result.pvalue;
 
@@ -1427,7 +1432,7 @@ List ADPopSelC(const List &parameters_arg) {
             stratum_list.push_back(3);
             outcome_censor_treatment = ExtractOutcomeCensor(stratum_list, survival_data.stratum, survival_data.start, survival_data.os_local, survival_data.os_local_censor, temp);
 
-            test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, 1);
+            test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, direction_index);
 
             trad_outcome[0] = (test_result.pvalue <= alpha && futility_flag < 1.0);        
 
@@ -1448,7 +1453,7 @@ List ADPopSelC(const List &parameters_arg) {
             stratum_list.push_back(3);
             outcome_censor_treatment = ExtractOutcomeCensor(stratum_list, survival_data.stratum, survival_data.start, survival_data.os_local, survival_data.os_local_censor, temp);
 
-            test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, 1);
+            test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, direction_index);
 
             trad_outcome[1] = (test_result.pvalue <= alpha && futility_flag < 1.0); 
 
@@ -1506,6 +1511,7 @@ List FutRuleC(const List &parameters_arg) {
     vector<double> hazard_rates = as<vector<double>>(parameters["hazard_rates"]);
 
     int endpoint_index = as<int>(parameters["endpoint_index"]);
+    int direction_index = as<int>(parameters["direction_index"]);
 
     int nsims = as<int>(parameters["nsims"]);
     double alpha = as<double>(parameters["alpha"]);
@@ -1551,13 +1557,13 @@ List FutRuleC(const List &parameters_arg) {
                 // Normal endpoint
                 if (endpoint_index == 1) {
                     treatment_sample = Normal(interim[i + 1], means[i + 1], sds[i + 1]);
-                    test_result = TTest(control_sample, treatment_sample, 0.0, 1);
+                    test_result = TTest(control_sample, treatment_sample, 0.0, direction_index);
                 }
 
                 // Binary endpoint
                 if (endpoint_index == 2) {
                     treatment_sample = Binary(interim[i + 1], rates[i + 1]);
-                    test_result = PropTest(control_sample, treatment_sample, 0.0, 1);
+                    test_result = PropTest(control_sample, treatment_sample, 0.0, direction_index);
                 }
 
                 // Conditional power
@@ -1624,7 +1630,7 @@ List FutRuleC(const List &parameters_arg) {
                 stratum_list.push_back(i + 1);
                 outcome_censor_treatment = ExtractOutcomeCensor(stratum_list, survival_data.stratum, survival_data.start, survival_data.os_local, survival_data.os_local_censor, look_time);
 
-                test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, 1);
+                test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, direction_index);
 
                 // Conditional power
                 cp[i] = CondPower(test_result.test_stat, interim[0], final[0], 1, 1, 0.0, alpha);

@@ -18,6 +18,8 @@ The calculations will be performed assuming the median event times of 7.5 months
 
 Operating characteristics of the futility stopping rule (sensitivity and specificity rates) and an optimal futility threshold will be computed using the \code{\link{FutRule}} function based on 1,000 simulation runs. A list of all trial design parameters (\code{parameters}) needs to be set up as shown below and passed to this function. A detailed simulation report can be generated using the \code{\link{GenerateReport}} function and a graphical user interface can be launched by calling the \code{\link{FutRuleApp}} function.
 }
+\arguments{No arguments}
+\value{No return value}
 \seealso{
   \code{\link{FutRule}}, \code{\link{FutRuleExample1}}, \code{\link{FutRuleExample2}}
 }
@@ -27,6 +29,9 @@ parameters = list()
 
 # Endpoint type
 parameters$endpoint_type = "Time-to-event"
+
+# Direction of favorable outcome
+parameters$direction = "Higher"
 
 # Number of enrolled patients (control, treatment)
 parameters$sample_size = c(125, 125)
