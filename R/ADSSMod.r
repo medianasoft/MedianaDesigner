@@ -505,7 +505,7 @@ ADSSModReportDoc = function(results) {
 
   #############################################################################
 
-  column_names = c("Population", "Value")
+  column_names = c("Parameter", "Value")
 
   if (parameters$direction_index == 1) label = "A higher value of the endpoint indicates a more favorable outcome"
 

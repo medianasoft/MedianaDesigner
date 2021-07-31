@@ -3,6 +3,9 @@
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/medianasoft/MedianaDesignerPrivate/workflows/R-CMD-check/badge.svg?branch=master)](https://github.com/medianasoft/MedianaDesignerPrivate/actions)
 [![codecov](https://codecov.io/gh/medianasoft/MedianaDesignerPrivate/branch/master/graph/badge.svg?token=NwvPou45uf)](https://codecov.io/gh/medianasoft/MedianaDesignerPrivate)
+[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/MedianaDesigner)](https://cran.r-project.org/package=MedianaDesigner)
+[![CRAN\_Logs\_Badge](http://cranlogs.r-pkg.org/badges/MedianaDesigner)](https://cran.r-project.org/package=MedianaDesigner)
+[![CRAN\_Logs\_Badge\_Total](http://cranlogs.r-pkg.org/badges/grand-total/MedianaDesigner)](https://cran.r-project.org/package=MedianaDesigner)
 <!-- badges: end -->
 
 ## Efficient Simulation-Based Power and Sample Size Calculations for a Broad Class of Late-Stage Clinical Trials
