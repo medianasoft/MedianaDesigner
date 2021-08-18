@@ -16,8 +16,8 @@ EventPred(parameters)
   \itemize{
     \item \code{data_set}{: Data frame that contains blinded patient enrollment, event and dropout data at the interim analysis with a single record per patient. The following :  
      \itemize{
-      \item \code{enrollment}{: Time of the patient's enrollment (months).}
-      \item \code{time}{: Time of the patient's death or last contact if the event is censored relative to the patient's enrollment (months).}
+      \item \code{enrollment}{: Time of the patient's enrollment.}
+      \item \code{time}{: Time of the patient's death or last contact if the event is censored relative to the patient's enrollment.}
       \item \code{event}{: Event indicator (1 if the patient died and 0 otherwise).}
       \item \code{dropout}{: Patient dropout indicator (1 if the patient dropped out of the trial/was lost to follow up and 0 otherwise).}
     }

@@ -45,8 +45,8 @@ parameters$dropout_prior_distribution =
 parameters$enrollment_prior_distribution = 
     EventPredPriorDistribution(expected = 35, uncertainty = 0.3)
 
-# Number of simulations
-parameters$nsims = 1000
+# Number of simulations, you should prefer more
+parameters$nsims = 100
 
 # Forecast the number of events at the pre-defined time points
 results = EventPred(parameters)

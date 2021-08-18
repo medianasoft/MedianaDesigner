@@ -21,3 +21,7 @@ EventPredEventCount <- function(parameters_arg) {
     .Call(`_MedianaDesigner_EventPredEventCount`, parameters_arg)
 }
 
+ADRandC <- function(parameters_arg) {
+    .Call(`_MedianaDesigner_ADRandC`, parameters_arg)
+}
+

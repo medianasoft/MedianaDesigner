@@ -100,6 +100,15 @@ vector<double> Uniform(const int &n, const double &min, const double &max) {
 }
 // # nocov end
 
+// Vector of gamma distributed values 
+vector<double> Gamma(const int &n, const double &shape, const double &rate) {
+
+    NumericVector temp_vector = Rcpp::rgamma(n, shape, 1.0 / rate);
+    vector<double> result = as<vector<double>>(temp_vector); 
+    return result;  
+
+}
+
 // Vector of truncated exponential values 
 vector<double> TruncatedExponential(const int &n, const double &par, const double &min, const double &max) {
 
@@ -181,8 +190,8 @@ vector<double> MVNormal(const int &m, const vector<double> &mean, const vector<d
     int i, j, k;
     double csum;
 
+    NumericMatrix chol(m, m), corr(m, m);
     vector<double> normal_data(m), mv_normal_data(m);
-    NumericMatrix chol(m,m), corr(m,m);
 
     for(i = 0; i< m; i++){
         for(j = 0; j < m; j++){
@@ -192,10 +201,9 @@ vector<double> MVNormal(const int &m, const vector<double> &mean, const vector<d
     }    
 
     // Cholesky lower diagonal matrix
-    // http://rosettacode.org/wiki/Cholesky_decomposition
     for(i = 0; i< m; i++){
             for(j = 0; j < (i + 1); j++){
-                csum = 0.0;
+                csum = 0;
                 for(k = 0; k < j; k++){
                     csum += chol(i, k) * chol(j, k);
                 }

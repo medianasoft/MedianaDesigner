@@ -1,5 +1,7 @@
 #include <Rcpp.h>
+#include <RcppNumerical.h>
 
+using namespace Numer;
 using namespace std;
 using namespace Rcpp;
 
@@ -19,15 +21,8 @@ using namespace Rcpp;
 #include <fstream>
 #include <string>
 
-struct AllSurvivalData {
-    vector<int> stratum;
-    vector<double> start;
-    vector<double> dropout;
-    vector<double> os;
-    vector<double> os_local;
-    vector<double> os_local_censor;
-    vector<double> os_local_start;
-};
+int n_models = 4, direction_index_local = 1;
+double final_gradient;
 
 vector<double> HochbergOutcome(const vector<double> &pvalue, const double &alpha) {
 
@@ -69,12 +64,6 @@ vector<double> HochbergOutcome(const vector<double> &pvalue, const double &alpha
     return outcome;
 
 }
-
-struct MeanSD 
-{
-    double mean;
-    double sd;    
-};
 
 double ComputeRate(const vector<double> &vec) {
 
@@ -274,6 +263,639 @@ vector<double> HypothesisSelection(const double &effect_size_minus, const double
 
 }
 // End of HypothesisSelection
+
+//REM, 43
+double Logit(const double &x) {
+    return log(x /(1.0 - x));
+}
+
+//REM, 47
+// Compute the mean of a vector
+double MeanVec(const vector<double> &vec)
+{
+   double mean_vec = 0.0;
+
+   if (vec.size() > 0) mean_vec = accumulate(vec.begin(), vec.end(), 0.0) / vec.size();
+
+   return(mean_vec);
+}
+
+//REM, 146
+double DoseResponseFunction(const double &x, const int &model, const vector<double> &beta, const double &direction_index) {
+
+    double y = 0.0, den;
+
+    // Linear model
+    if (model == 1) {
+        y = beta[0] + beta[1] * x;
+    }
+
+    // Exponential model
+    if (model == 2) {
+        y = beta[0] + beta[1] * (exp(x / beta[2]) - 1.0);
+    }
+
+    // Emax model
+    if (model == 3) {
+        y = beta[0] + beta[1] * x / (beta[2] + x);
+    }
+
+    // Logistic model
+    if (model == 4) {
+        den = 1.0 + exp((beta[2] - x) / beta[3]);
+        y = beta[0] + beta[1] / den;
+    }
+
+    return y;
+
+}
+
+//REM, 176
+// Compute the model parameters to match the placebo and maximum effects
+vector<double> StandardDRFunction(const int &model_index, const double &placebo_effect, const double &max_effect, const double &max_dose, const vector<double> &parameters) {
+
+    int i;
+    vector<double> coef;    
+
+    // Linear model
+    if (model_index == 1) {
+        vector<double> local_coef(2);
+        local_coef[0] = placebo_effect;
+        local_coef[1] = max_effect / max_dose;
+        for (i = 0; i < 2; i++) coef.push_back(local_coef[i]);
+    }
+
+    // Exponential model
+    if (model_index == 2) {
+        vector<double> local_coef(3);
+        local_coef[0] = placebo_effect;
+        local_coef[1] = max_effect / (exp(max_dose / parameters[0]) - 1.0);
+        local_coef[2] = parameters[0];
+        for (i = 0; i < 3; i++) coef.push_back(local_coef[i]);
+    }
+
+    // Emax model
+    if (model_index == 3) {
+        vector<double> local_coef(3);
+        local_coef[0] = placebo_effect;
+        local_coef[1] = max_effect * (parameters[0] + max_dose) / max_dose;
+        local_coef[2] = parameters[0];
+        for (i = 0; i < 3; i++) coef.push_back(local_coef[i]);
+    }
+
+    // Logistic model
+    if (model_index == 4) {
+        vector<double> local_coef(4);
+        vector<double> temp_local_coef(4);
+        temp_local_coef[0] = 0.0;
+        temp_local_coef[1] = 1.0;
+        temp_local_coef[2] = parameters[0];
+        temp_local_coef[3] = parameters[1];
+
+        double temp =  max_effect / (DoseResponseFunction(max_dose, 4, temp_local_coef, 1.0) - DoseResponseFunction(0.0, 4, temp_local_coef, 1.0));
+        local_coef[0] = placebo_effect - temp * DoseResponseFunction(0.0, 4, temp_local_coef, 1.0);
+        local_coef[1] = temp;
+        local_coef[2] = parameters[0];
+        local_coef[3] = parameters[1];
+        for (i = 0; i < 4; i++) coef.push_back(local_coef[i]);
+    }
+
+    return coef; 
+
+}
+
+//REM, 229
+// Compute the model parameters to match the placebo and maximum effects
+vector<double> ComputeDoseResponseFunctionParameters(const int &model, const double &placebo_effect, const double &max_effect, const double &max_dose, const vector<double> &nonlinear_parameters) {
+
+    vector<double> coef(5), temp_coef(5);
+    double temp = 0.0;
+
+    // Exponential model
+    if (model == 2) {
+        coef[0] = placebo_effect;
+        coef[1] = max_effect / (exp(max_dose / nonlinear_parameters[0]) - 1.0);
+        coef[2] = nonlinear_parameters[0];
+    }
+
+    // Emax model
+    if (model == 3) {
+        coef[0] = placebo_effect;
+        coef[1] = max_effect * (nonlinear_parameters[0] + max_dose) / max_dose;
+        coef[2] = nonlinear_parameters[0];
+    }
+
+    // Logistic model
+    if (model == 4) {
+        temp_coef[0] = 0.0;
+        temp_coef[1] = 1.0;
+        temp_coef[2] = nonlinear_parameters[0];
+        temp_coef[3] = nonlinear_parameters[1];
+        temp =  max_effect / (DoseResponseFunction(max_dose, 4, temp_coef, 1) - DoseResponseFunction(0.0, 4, temp_coef, 1));
+        coef[0] = placebo_effect - temp * DoseResponseFunction(0.0, 4, temp_coef, 1);
+        coef[1] = temp;
+        coef[2] = nonlinear_parameters[0];
+        coef[3] = nonlinear_parameters[1];
+    }
+
+    return coef;
+
+}
+
+//REM, 269
+NumericMatrix OptContrast(const NumericMatrix &user_specified, const vector<int> &model_index, const double &direction_index, const vector<double> &dose_levels, const vector<double> &var) {
+
+    int i, j, n_doses = dose_levels.size(), n_models = model_index.size();
+    double max_dose = dose_levels.back(), temp, sumvar;
+    vector<double> parameter_values(5), non_linear_parameters, ubar(n_models), ustarbar(n_models);
+    NumericMatrix u(n_doses, n_models), ustar(n_doses, n_models);
+
+    NumericMatrix opt_contrast(n_doses, n_models);
+
+    sumvar = 0.0;
+    for (j = 0; j < n_doses; j++) sumvar += 1.0 / var[j];
+
+    // Set up dose-response models based on the initial values
+    for (i = 0; i < n_models; i++) {
+
+        non_linear_parameters = ExtractRow(user_specified, i);
+
+        // Parameters of a standardized model
+        parameter_values = StandardDRFunction(model_index[i], 0.0, 1.0, max_dose, non_linear_parameters);
+
+        for (j = 0; j < n_doses; j++) {
+
+          u(j, i) = DoseResponseFunction(dose_levels[j], model_index[i], parameter_values, 1.0);
+
+        }
+
+    }
+
+    for (i = 0; i < n_models; i++) {
+
+        ubar[i] = 0.0;
+        for (j = 0; j < n_doses; j++) ubar[i] += u(j, i) / var[j];
+        ubar[i] /= sumvar;    
+
+        for (j = 0; j < n_doses; j++) ustar(j, i) = (u(j, i) - ubar[i]) / var[j];
+        ustarbar[i] = 0;    
+        for (j = 0; j < n_doses; j++) ustarbar[i] += ustar(j, i);
+        ustarbar[i] /= (double) n_doses;
+            
+        temp = 0.0;
+        for (j = 0; j < n_doses; j++) temp += Sq(ustar(j, i) - ustarbar[i]);  
+        for (j = 0; j < n_doses; j++) opt_contrast(j, i) = (ustar(j, i) - ustarbar[i])/ sqrt(temp);            
+
+    }                
+
+    return opt_contrast;
+}
+
+//REM, 318
+vector<double> FitLinearModel(const vector<double> &x, const vector<double> &y) {
+
+    int i, n = x.size();
+    vector<double> coef(2);
+    double temp1 = 0.0, temp2 = 0.0;
+
+    double x_mean = MeanVec(x);
+    double y_mean = MeanVec(y);
+
+    for(i = 0; i < n; i++) {
+        temp1 += (x[i] - x_mean) * (y[i] - y_mean);
+        temp2 += Sq(x[i] - x_mean);
+    }
+
+    coef[1] = temp1 / temp2;
+    coef[0] = y_mean - coef[1] * x_mean;
+
+    return coef;  
+}
+
+//REM, 338
+class WLSFit: public MFuncGrad
+{
+private:
+    const vector<double> X;
+    const vector<double> Y;
+    const NumericMatrix S;
+    const vector<double> bounds;
+    const int model;
+public:
+    WLSFit(const vector<double> x_, const vector<double> y_, const NumericMatrix s_, const vector<double> bounds_, const int model_) : X(x_), Y(y_), S(s_), bounds(bounds_), model(model_) {}
+
+    double f_grad(Constvec& beta, Refvec grad)
+    {
+
+        int i, j, n = X.size(), n_parameters;
+        double wls_criterion = 0.0, diffi, diffj, deni, denj, e0, e1, delta, ed50, emax;
+        Eigen::VectorXd gradient; 
+
+        if (model == 1) n_parameters = 2;
+        if (model == 2 || model == 3) n_parameters = 3;
+        if (model == 4) n_parameters = 4;
+
+        gradient.resize(n_parameters); 
+        for (i = 0; i < n_parameters; i++) gradient[i] = 0.0;           
+
+        // Linear model
+        if (model == 1) {    
+
+            e0 = beta[0];    
+            delta = beta[1];    
+
+            for(i = 0; i < n; i++) {
+                for(j = 0; j < n; j++) {
+                    diffi = e0 + delta * X[i] - Y[i];                
+                    diffj = e0 + delta * X[j] - Y[j];
+                    wls_criterion += S(i, j) * diffi * diffj;
+                    gradient[0] += S(i, j) * (diffi + diffj);
+                    gradient[1] += S(i, j) * (X[j] * diffi + X[i] * diffj);
+                }
+            }
+        }
+
+        // Exponential model
+        if (model == 2) {    
+
+            e0 = beta[0];    
+            e1 = beta[1];    
+            delta = beta[2];
+            if (delta < bounds[0]) delta = bounds[0];
+            if (delta > bounds[1]) delta = bounds[1];
+
+            for(i = 0; i < n; i++) {
+                for(j = 0; j < n; j++) {
+                    diffi = e0 + e1 * (exp(X[i] / delta) - 1.0) - Y[i];                
+                    diffj = e0 + e1 * (exp(X[j] / delta) - 1.0) - Y[j];
+                    wls_criterion += S(i, j) * diffi * diffj;
+                    gradient[0] += S(i, j) * (diffi + diffj);
+                    gradient[1] += S(i, j) * ((exp(X[i] / delta) - 1.0) * diffj + (exp(X[j] / delta) - 1.0) * diffi);
+                    gradient[2] += S(i, j) * ((- e1 * exp(X[i] / delta) / Sq(delta)) * diffj + (- e1 * exp(X[j] / delta) / Sq(delta)) * diffi);
+                }
+            }
+
+        }
+
+        // Emax model
+        if (model == 3) {    
+
+            e0 = beta[0];    
+            emax = beta[1];    
+            ed50 = beta[2];    
+            if (ed50 < bounds[0]) ed50 = bounds[0];
+            if (ed50 > bounds[1]) ed50 = bounds[1];
+
+            for(i = 0; i < n; i++) {
+                for(j = 0; j < n; j++) {
+                    diffi = e0 + emax * X[i] / (ed50 + X[i]) - Y[i];                
+                    diffj = e0 + emax * X[j] / (ed50 + X[j]) - Y[j];
+                    wls_criterion += S(i, j) * diffi * diffj;
+                    gradient[0] += S(i, j) * (diffi + diffj);
+                    gradient[1] += S(i, j) * (diffj * X[i] / (ed50 + X[i]) + diffi * X[j] / (ed50 + X[j]));
+                    gradient[2] += S(i, j) * (diffj * (- emax * X[i] / Sq(ed50 + X[i])) + diffi * (- emax * X[j] / Sq(ed50 + X[j])));
+                }
+            }
+
+        }
+
+        // Logistic model
+        if (model == 4) {    
+
+            e0 = beta[0];    
+            emax = beta[1];    
+            ed50 = beta[2];    
+            delta = beta[3];    
+            if (ed50 < bounds[0]) ed50 = bounds[0]; 
+            if (ed50 > bounds[1]) ed50 = bounds[1];
+            if (delta < bounds[2]) delta = bounds[2];
+            if (delta > bounds[3]) delta = bounds[3];
+
+            for(i = 0; i < n; i++) {
+                for(j = 0; j < n; j++) {
+                    deni = 1.0 + exp((ed50 - X[i]) / delta);
+                    denj = 1.0 + exp((ed50 - X[j]) / delta);
+                    diffi = e0 + emax / deni - Y[i];                
+                    diffj = e0 + emax / denj - Y[j];
+                    wls_criterion += S(i, j) * diffi * diffj;
+                    gradient[0] += S(i, j) * (diffi + diffj);
+                    gradient[1] += S(i, j) * (diffj / deni + diffi / denj);
+                    gradient[2] += S(i, j) * (diffj * (- emax * (deni - 1.0) / (delta * Sq(deni))) + diffi * (- emax * (denj - 1.0) / (delta * Sq(denj))));
+                    gradient[3] += S(i, j) * (diffj * (emax * (deni - 1.0) * (ed50 - X[i]) / (Sq(delta * deni))) + diffi * (emax * (denj - 1.0) * (ed50 - X[j]) / (Sq(delta * denj))));
+                }
+            }
+
+        }
+
+        final_gradient = 0.0;
+        for (i = 0; i < n_parameters; i++) final_gradient += abs(gradient[i]);
+
+        const double f = wls_criterion;
+        grad.noalias() = gradient;
+
+        return f;
+    }
+};
+
+//REM, 463
+// Scaled inverse chi-square distribution
+vector<double> ScaledInvChiSq(const int &n, const double &nu, const double &tau2) {
+  
+    int i;
+    vector<double> result(n);
+
+    for (i = 0; i < n; i++) 
+        result[i] = 1.0 / Gamma(1, 
+                                nu / 2.0, 
+                                (nu * tau2) / 2.0)[0];
+
+    return result;  
+
+}
+
+//REM, 477
+vector<double> GeneratePosteriorSample(const int &nsamples, const double &mean_obs, const double &sd_obs, const int &n_obs, const double &nu_prior, const double &tau2_prior, const double &mean_prior, const double &k){
+  
+    int i; 
+
+    double mean_post;
+    vector<double> sample(nsamples), var_post(nsamples);
+
+    // Variance follows and inverse chi-squared distribution
+    var_post = ScaledInvChiSq(nsamples, 
+                 nu_prior + n_obs, 
+                 (nu_prior * tau2_prior + (n_obs - 1.0) * Sq(sd_obs) + (k * (n_obs + 0.0) * Sq(mean_prior - mean_obs)) / (k + n_obs)) / (nu_prior + n_obs + 0.0));
+
+    for (i = 0; i < nsamples; i++) {
+        mean_post = Normal(1, (k * mean_prior + (n_obs + 0.0) * mean_obs) / (k + n_obs + 0.0), sqrt(var_post[i] / (k + n_obs + 0.0)))[0];
+        sample[i] = Normal(1, mean_post, sqrt(var_post[i]))[0];
+    }
+
+    return sample;
+
+}
+
+//REM, 498
+void SetInitialValues(vector<ModelInformation> &model_information, const vector<double> &dose, const vector<double> &response, const double &max_dose, const vector<int> &model_index) {
+
+    int i;
+    vector<double> linear_coef(2);
+
+    // Fit a linear regression model first    
+    linear_coef = FitLinearModel(dose, response);
+
+    double placebo_effect = linear_coef[0], max_effect = linear_coef[0] + linear_coef[1] * max_dose, d, d1, d2, p, p1, p2;
+
+    // Initial values of the non-linear model parameters  
+    vector<double> non_linear_parameters(3), temp_vec(1), bounds1(2), bounds2(4), temp_par;
+
+    non_linear_parameters = fillvec(3, 0.0);
+
+    temp_vec[0] = 0.0;
+
+    ModelInformation current_model_information;
+
+    for (i = 0; i < n_models; i++) {
+
+        current_model_information.model_index = model_index[i];
+
+        // Set initial values of the model parameters
+
+        // Linear
+        if (model_index[i] == 1) {
+
+            current_model_information.n_parameters = 2;
+            current_model_information.initial_values = linear_coef;
+        }
+
+        // Exponential
+        if (model_index[i] == 2) {
+
+            current_model_information.n_parameters = 3;
+
+            non_linear_parameters[0] = max_dose;
+            current_model_information.initial_values = ComputeDoseResponseFunctionParameters(2, placebo_effect, max_effect, max_dose, non_linear_parameters);
+
+            // Use pre-defined bounds for non-linear model parameters
+            bounds1[0] = 0.1 * max_dose;
+            bounds1[1] = 2.0 * max_dose;
+
+            current_model_information.bounds = bounds1;
+        }
+
+        // Emax
+        if (model_index[i] == 3) {
+
+            current_model_information.n_parameters = 3;
+
+            d = 0.5 * max_dose;
+            p = 0.5;
+            non_linear_parameters[0] = d * (1.0 - p) / p;
+            current_model_information.initial_values = ComputeDoseResponseFunctionParameters(3, placebo_effect, max_effect, max_dose, non_linear_parameters);
+
+            // Use pre-defined bounds for non-linear model parameters
+            bounds1[0] = 0.001 * max_dose;
+            bounds1[1] = 1.5 * max_dose;
+
+            current_model_information.bounds = bounds1;
+
+        }
+
+        // Logistic
+        if (model_index[i] == 4) {
+
+            current_model_information.n_parameters = 4;
+
+            d1 = 0.33 * max_dose;
+            p1 = 0.33;
+            d2 = 0.66 * max_dose;
+            p2 = 0.66;
+            non_linear_parameters[0] = (d1 * Logit(p2) - d2 * Logit(p1)) / (Logit(p2) - Logit(p1));
+            non_linear_parameters[1] = (d2 - d1)/(Logit(p2) - Logit(p1));
+            current_model_information.initial_values = ComputeDoseResponseFunctionParameters(4, placebo_effect, max_effect, max_dose, non_linear_parameters);
+
+            // Use pre-defined bounds for non-linear model parameters
+            bounds2[0] = 0.001 * max_dose;
+            bounds2[1] = 1.5 * max_dose;
+            bounds2[2] = 0.01 * max_dose;
+            bounds2[3] = 0.3 * max_dose;
+
+            current_model_information.bounds = bounds2;
+
+        }
+
+        current_model_information.coef = fillvec(current_model_information.n_parameters, 0.0);
+
+        current_model_information.status = -1;
+        current_model_information.criterion = 10000.0;    
+        current_model_information.target_dose = -1.0;
+        current_model_information.convergence_criterion = -1.0;
+
+        model_information[i] = current_model_information;        
+
+    }
+
+}
+
+//REM, 599
+// MCPMod analysis at the end of the trial
+vector<double> MCPMod(const vector<int> &group_n, const vector<double> &group_mean, const vector<double> &group_sd, const vector<double> &dose_levels, const vector<int> &model_index, const vector<double> &non_linear_vector) {
+
+    /*******************************************************************/
+
+    double denom, numer, pooled_variance;
+
+    int i, j, n_doses = group_n.size();
+
+    vector<double> test_stat(n_models), sign_model(n_models), var(n_doses);
+
+    NumericMatrix optimal_contrast, non_linear_matrix(4, 2);
+
+    /*******************************************************************/
+
+    // Non-linear parameters
+
+    // Linear model
+    non_linear_matrix(0, 0) = non_linear_vector[0]; 
+
+    // Exponential model
+    non_linear_matrix(1, 0) = non_linear_vector[1]; 
+
+    // Emax model
+    non_linear_matrix(2, 0) = non_linear_vector[2]; 
+
+    // Logistic model
+    non_linear_matrix(3, 0) = non_linear_vector[3]; 
+    non_linear_matrix(3, 1) = non_linear_vector[4]; 
+
+    for (j = 0; j < n_doses; j++) {
+        var[j] = 1.0 / (group_n[j] + 0.0);
+    }
+
+    // Pooled variance
+    pooled_variance = 0.0;
+    for (j = 0; j < n_doses; j++) {
+        pooled_variance += (group_n[j] - 1.0) * Sq(group_sd[j]);
+    }
+    pooled_variance /= (SumVecInt(group_n) - n_doses + 0.0);
+
+    // Compute the optimal contrast 
+    optimal_contrast = OptContrast(non_linear_matrix, model_index, direction_index_local, dose_levels, var);
+
+    for (i = 0; i < n_models; i++) {
+      denom = 0.0;
+      numer = 0.0;
+      for (j = 0; j < n_doses; j++) {
+          numer = numer + optimal_contrast(j, i) * group_mean[j];
+          denom = denom + Sq(optimal_contrast(j, i)) / (group_n[j] + 0.0);
+      }
+      test_stat[i] = numer / sqrt(pooled_variance * denom);
+    }
+
+    /*******************************************************************/
+
+    return test_stat;
+}
+
+//REM, 659
+// Fit dose-response models for the standard MCPMod method 
+void FitDoseResponseModels(vector<ModelInformation> &model_information, const vector<double> &dose, const vector<double> &response, const NumericMatrix &cov_mat, const double &direction_index, const int &maxit, const double &max_gradient) {
+
+    int i, j, n_parameters, convergence;
+
+    vector<double> coef;
+
+    double fopt, eps_f = 1e-08, eps_g = 1e-06;
+
+    /*******************************************************************************/
+
+    for (i = 0; i < n_models; i++) {
+
+        n_parameters = model_information[i].n_parameters;
+        Eigen::VectorXd beta(n_parameters);
+        coef.clear();
+        convergence = 1;
+
+        for (j = 0; j < n_parameters; j++) {
+            beta[j] = model_information[i].initial_values[j];               
+        }
+
+        WLSFit regression_fit(dose, response, cov_mat, model_information[i].bounds, model_information[i].model_index);
+        model_information[i].status = optim_lbfgs(regression_fit, beta, fopt, maxit, eps_f, eps_g);
+
+        // Criteria for determining convergence
+        if (isnan(fopt) || isnan(final_gradient) || abs(final_gradient) > max_gradient || model_information[i].status < 0 || isnan(beta[0])) {
+            convergence = 0;
+            model_information[i].status = -1;
+        }
+
+        // Convergence
+        if (convergence == 1) {
+
+            // Apply constraints
+            if (model_information[i].model_index == 2 || model_information[i].model_index == 3) {
+                beta[2] = min(max(beta[2], model_information[i].bounds[0]), model_information[i].bounds[1]);           
+            }     
+
+            if (model_information[i].model_index == 4) {
+                beta[2] = min(max(beta[2], model_information[i].bounds[0]), model_information[i].bounds[1]);                
+                beta[3] = min(max(beta[3], model_information[i].bounds[2]), model_information[i].bounds[3]);                
+            }
+
+            for (j = 0; j < n_parameters; j++) coef.push_back(beta[j]);
+
+            model_information[i].coef = coef;
+            model_information[i].convergence_criterion = final_gradient;
+            model_information[i].criterion = fopt + 2.0 * (n_parameters + 0.0); 
+
+        }
+
+    }
+}
+
+
+//REM, 714
+vector<ModelInformation> ModelFit(const vector<int> &group_n, const vector<double> &group_mean, const vector<double> &group_sd, const vector<double> &dose_levels, const vector<int> &model_index, const vector<double> &non_linear_vector) {
+
+    /*******************************************************************/
+
+    double max_gradient = 1000.0, max_dose = dose_levels.back();
+
+    int j, n_doses = group_n.size(), maxit = 50;
+
+    NumericMatrix cov_mat(n_doses, n_doses), non_linear_matrix(4, 2);
+
+    /*******************************************************************/
+
+    // Non-linear parameters
+
+    // Linear model
+    non_linear_matrix(0, 0) = non_linear_vector[0]; 
+
+    // Exponential model
+    non_linear_matrix(1, 0) = non_linear_vector[1]; 
+
+    // Emax model
+    non_linear_matrix(2, 0) = non_linear_vector[2]; 
+
+    // Logistic model
+    non_linear_matrix(3, 0) = non_linear_vector[3]; 
+    non_linear_matrix(3, 1) = non_linear_vector[4]; 
+
+    for (j = 0; j < n_doses; j++) {
+        cov_mat(j, j) = group_n[j];
+    }
+
+    // Vector of model information parameters
+    vector<ModelInformation> model_information(n_models);
+
+    SetInitialValues(model_information, dose_levels, group_mean, max_dose, model_index);
+
+    FitDoseResponseModels(model_information, dose_levels, group_mean, cov_mat, direction_index_local, maxit, max_gradient);
+
+    return model_information;
+
+}
 
 // [[Rcpp::export]]
 List ADSSModC(const List &parameters_arg) {
@@ -680,7 +1302,6 @@ List ADSSModC(const List &parameters_arg) {
 
 }
 // End of ADSSModC
-
 
 // [[Rcpp::export]]
 List ADTreatSelC(const List &parameters_arg) {
@@ -1746,5 +2367,225 @@ List EventPredEventCount(const List &parameters_arg) {
 }
 // End of EventPredEventCount
 
+// [[Rcpp::export]]
+List ADRandC(const List &parameters_arg) {
 
+    List parameters(parameters_arg);
 
+    vector<int> stage_sample_size = as<vector<int>>(parameters["stage_sample_size"]);
+    vector<double> mean = as<vector<double>>(parameters["mean"]);
+    vector<double> sd = as<vector<double>>(parameters["sd"]);
+    vector<double> dose_levels = as<vector<double>>(parameters["dose_levels"]);
+
+    vector<int> model_index = as<vector<int>>(parameters["model_index"]);
+    vector<double> non_linear_vector = as<vector<double>>(parameters["non_linear_vector"]);
+
+    int direction_index = as<int>(parameters["direction_index"]);
+
+    double treatment_period = as<double>(parameters["treatment_period"]);    
+
+    double enrollment_period = as<double>(parameters["enrollment_period"]);    
+    double enrollment_parameter = as<double>(parameters["enrollment_parameter"]);    
+    double dropout_rate = as<double>(parameters["dropout_rate"]);    
+
+    double delta = as<double>(parameters["delta"]);    
+    double ratio_placebo = as<double>(parameters["ratio_placebo"]);    
+    double balance = as<double>(parameters["balance"]);    
+
+    int nsims = as<int>(parameters["nsims"]);    
+    int n_per_arm = as<int>(parameters["n_per_arm"]);    
+
+    /*******************************************************************/
+
+    double denom, denominator, current_criterion, planned_end, overrun1, overrun2;
+
+    int i, j, sim, stage, n_doses = dose_levels.size(), n_total = SumVecInt(stage_sample_size), n_stages = stage_sample_size.size(), nsamples = 1000, current_sample_size;
+
+    vector<int> n(n_doses), sample_n(n_doses);
+    vector<double> traditional(n_models), adaptive(n_models), sample_mean(n_doses), predicted_mean(n_doses), sample_sd(n_doses), patient_start, randomization_ratio(n_doses), post_prob(n_doses - 1), sample_sum(n_doses), sample_sum_sq(n_doses), placebo_sample, current_sample, criterion(n_models), linear_coef(2), exp_coef(3), emax_coef(3), logistic_coef(4), model_weight(n_models), coef;
+
+    NumericMatrix sample_n_matrix(nsims, n_doses), traditional_matrix(nsims, n_models),adaptive_matrix(nsims, n_models), prediction(n_models, n_doses), stage_sample_size_matrix(nsims, n_stages);
+
+    vector<ModelInformation> model_information;
+    
+    /*******************************************************************/
+
+    for (sim = 0; sim < nsims; sim++) { 
+
+        // Traditional design
+
+        sample_n = FillVecInt(n_doses, 0);
+        sample_sum = fillvec(n_doses, 0.0);
+        sample_sum_sq = fillvec(n_doses, 0.0);
+
+        // Generate the data and compute descriptive statistics
+        for (i = 0; i < n_doses; i++) {
+            n[i] = (int) round(n_per_arm * (1.0 - dropout_rate));
+            if (direction_index == 1) current_sample = Normal(n[i], mean[i], sd[i]); 
+            if (direction_index == 2) current_sample = Normal(n[i], -mean[i], sd[i]);
+            sample_sum[i] = sum(current_sample);
+            sample_sum_sq[i] = sumsq(current_sample);
+            sample_mean[i] = sample_sum[i] / (double) n[i];
+            sample_sd[i] = sqrt(sample_sum_sq[i] / (double) n[i] - Sq(sample_mean[i]));
+        }        
+
+        // Perform the MCPMod analysis at the final analysis in the traditional design
+        traditional = MCPMod(n, sample_mean, sample_sd, dose_levels, model_index, non_linear_vector);
+
+        // Adaptive design
+
+        sample_n = FillVecInt(n_doses, 0);
+        sample_sum = fillvec(n_doses, 0.0);
+        sample_sum_sq = fillvec(n_doses, 0.0);
+
+        // Patient enrollment times
+        patient_start = Enrollment(n_total, enrollment_period, 2, enrollment_parameter); 
+        sort(patient_start.begin(), patient_start.end());
+
+        // Compute the initial randomization ratios
+        randomization_ratio[0] = ratio_placebo;
+        for (i = 1; i < n_doses; i++) {
+            randomization_ratio[i] = (1.0 - ratio_placebo) / (n_doses - 1.0);
+        }
+
+        overrun1 = 0.0;
+        current_sample_size = 0;
+
+        // Actual number of patients in each stage 
+        for (stage = 0; stage < n_stages; stage++) {
+
+            current_sample_size += stage_sample_size[stage];
+
+            // Planned end of current stage
+            planned_end = patient_start[current_sample_size - 1];
+
+            // Number of overrun patients enrolled between the planned end and interim look
+            overrun2 = 0.0;
+            if (stage < n_stages - 1) {
+
+                if (patient_start[current_sample_size] < planned_end + treatment_period) {
+                    j = 0;
+                    while(current_sample_size + j < n_total && patient_start[current_sample_size + j] < planned_end + treatment_period) {
+                        j++;
+                    }
+                    overrun2 = (double) j;
+                }
+            } 
+
+            stage_sample_size_matrix(sim, stage) = stage_sample_size[stage] + overrun2 - overrun1;
+            overrun1 = overrun2;
+
+        }
+
+        for (stage = 0; stage < n_stages; stage++) {
+
+            // Generate the data and compute descriptive statistics
+            for (i = 0; i < n_doses; i++) {
+                n[i] = (int) round(stage_sample_size_matrix(sim, stage) * randomization_ratio[i] * (1.0 - dropout_rate));
+                if (n[i] <= 0) n[i] = 1;
+                if (direction_index == 1) current_sample = Normal(n[i], mean[i], sd[i]); 
+                if (direction_index == 2) current_sample = Normal(n[i], -mean[i], sd[i]);
+                sample_n[i] += n[i];
+                sample_sum[i] += sum(current_sample);
+                sample_sum_sq[i] += sumsq(current_sample);
+                sample_mean[i] = sample_sum[i] / (double) sample_n[i];
+                sample_sd[i] = sqrt(sample_sum_sq[i] / (double) sample_n[i] - Sq(sample_mean[i]));
+            }
+
+            // Fit the candidate dose-response model, apply model averaging and compute predicted means
+
+            model_information = ModelFit(sample_n, sample_mean, sample_sd, dose_levels, model_index, non_linear_vector);
+
+            for (i = 0; i < 2; i++) linear_coef[i] = model_information[0].coef[i];
+            for (i = 0; i < 3; i++) exp_coef[i] = model_information[1].coef[i];
+            for (i = 0; i < 3; i++) emax_coef[i] = model_information[2].coef[i];
+            for (i = 0; i < 4; i++) logistic_coef[i] = model_information[3].coef[i];
+
+            // Model-specific predicted means
+            for (i = 0; i < n_models; i++) {    
+
+                if (i == 0) coef = linear_coef;
+                if (i == 1) coef = exp_coef;
+                if (i == 2) coef = emax_coef;
+                if (i == 3) coef = logistic_coef;
+
+                for (j = 0; j < n_doses; j++) prediction(i, j) = DoseResponseFunction(dose_levels[j], model_index[i], coef, 1); 
+
+            }
+
+            // Model weights
+            for (i = 0; i < n_models; i++) {
+
+                model_weight[i] = 0.0;
+
+                if (model_information[i].status >= 0) {
+
+                    current_criterion = model_information[i].criterion;
+                    denominator = 0.0;
+
+                    for (j = 0; j < n_models; j++) {
+
+                        if (model_information[j].status >= 0) denominator += exp(- 0.5 * (model_information[j].criterion - current_criterion));
+
+                    }
+
+                    if (abs(denominator) > 0.0001) model_weight[i] = 1.0 / denominator;
+
+                }
+
+            }
+
+            for (j = 0; j < n_doses; j++) {
+
+                predicted_mean[j] = 0.0;
+                for (i = 0; i < n_models; i++) predicted_mean[j] += (model_weight[i] * prediction(i, j));
+
+            }
+
+            // Compute the posterior probabilities of target efficacy
+
+            // Sample from the posterior distribution to create a placebo sample
+            placebo_sample = GeneratePosteriorSample(nsamples, predicted_mean[0], sample_sd[0], sample_n[0], -1.0, 0.0, 0.0, 0.0);
+
+            for (i = 1; i < n_doses; i++) {
+                current_sample = GeneratePosteriorSample(nsamples, predicted_mean[i], sample_sd[i], sample_n[i], -1.0, 0.0, 0.0, 0.0);
+                post_prob[i - 1] = 0.0;
+                for (j = 0; j < nsamples; j++) post_prob[i - 1] += (current_sample[j] >= placebo_sample[j] + delta);
+                post_prob[i - 1] /= (nsamples + 0.0);   
+            }
+
+            denom = 0.0;
+            for (i = 0; i < n_doses - 1; i++) denom += pow(post_prob[i], balance);
+
+            // Update the randomization ratio
+            randomization_ratio[0] = ratio_placebo;
+            for (i = 1; i < n_doses; i++) {
+                randomization_ratio[i] = (1.0 - ratio_placebo) * pow(post_prob[i - 1], balance) / denom;
+            }
+
+        }
+        // End of stages
+
+        // Perform the MCPMod analysis at the final analysis in the adaptive design
+        adaptive = MCPMod(sample_n, sample_mean, sample_sd, dose_levels, model_index, non_linear_vector);
+
+        // Save the results
+        for (i = 0; i < n_doses; i++) {
+            sample_n_matrix(sim, i) = sample_n[i];
+        }
+
+        for (i = 0; i < n_models; i++) traditional_matrix(sim, i) = traditional[i];
+        for (i = 0; i < n_models; i++) adaptive_matrix(sim, i) = adaptive[i];
+
+    }
+
+    /*******************************************************************/
+
+    // Return simulation results
+
+    return List::create(Named("n") = sample_n_matrix,
+                        Named("traditional") = traditional_matrix,
+                        Named("adaptive") = adaptive_matrix,
+                        Named("stage_sample_size") = stage_sample_size_matrix);
+
+}

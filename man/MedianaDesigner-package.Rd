@@ -8,35 +8,38 @@ Efficient Simulation-Based Power and Sample Size Calculations for a Broad Class 
 \description{
 The MedianaDesigner package provides efficient simulation-based tools for Phase II/III and Phase III clinical trials. The following five modules are included in the package:
 \itemize{
-\item Adaptive designs with data-driven sample size or event count re-estimation.
-\item Adaptive designs with data-driven treatment selection.
-\item Adaptive designs with data-driven population selection.
+\item Adaptive trials with data-driven sample size or event count re-estimation.
+\item Adaptive trials with data-driven treatment selection.
+\item Adaptive trials with data-driven population selection.
 \item Optimal selection of a futility stopping rule.
 \item Event prediction in event-driven trials.
+\item Adaptive trials with response-adaptive randomization (experimental module).
 }
-For more information on this package, visit \url{https://mediana.us/free-software/}. The technical manuals with a detailed description of the statistical methodology implemented in each module can be found at \url{https://medianasoft.github.io/MedianaDesigner}.
+For more information on this package, visit \url{https://mediana.us/free-software/}. The technical manuals with a detailed description of the statistical methodology implemented in each module are available at \url{https://medianasoft.github.io/MedianaDesigner}. Additional information and multiple case studies can be found in the online manual at \url{https://medianasoft.github.io/MedianaDesigner}.
 }
 \details{
 \tabular{ll}{
 Package: \tab MedianaDesigner\cr
 Type: \tab Package\cr
-Version: \tab 0.2\cr
-Date: \tab 2021-07-07\cr
+Version: \tab 0.3\cr
+Date: \tab 2021-08-15\cr
 License: \tab GPL-3
 }
 Key functions included in the package:
 \itemize{
 \item \code{\link{ADSSMod}}: Simulation-based design of adaptive trials with data-driven sample size or event count re-estimation.
-\item \code{\link{ADSSModApp}}: Graphical user interface to design adaptive trials with data-driven sample size or event count re-estimation.
+\item \code{\link{ADSSModApp}}: Graphical user interface for designing adaptive trials with data-driven sample size or event count re-estimation.
 \item \code{\link{ADTreatSel}}: Simulation-based design of adaptive trials with data-driven treatment selection.
-\item \code{\link{ADTreatSelApp}}: Graphical user interface to design adaptive trials with data-driven treatment selection.
+\item \code{\link{ADTreatSelApp}}: Graphical user interface for designing adaptive trials with data-driven treatment selection.
 \item \code{\link{ADPopSel}}: Simulation-based design of adaptive trials with data-driven population selection.
-\item \code{\link{ADPopSelApp}}: Graphical user interface to design adaptive trials with data-driven population selection.
+\item \code{\link{ADPopSelApp}}: Graphical user interface for designing adaptive trials with data-driven population selection.
 \item \code{\link{FutRule}}: Simulation-based selection of an optimal futility stopping rule at an interim analysis.
 \item \code{\link{FutRuleApp}}: Graphical user interface for an optimal selection of a futility stopping rule.
 \item \code{\link{EventPred}}: Simulation-based event prediction in trials with an event-driven design.
 \item \code{\link{EventPredPriorDistribution}}: Calculation of the parameters of prior gamma distributions.
 \item \code{\link{EventPredApp}}: Graphical user interface for event prediction.
+\item \code{\link{ADRand}}: Simulation-based design of adaptive trials with response-adaptive randomization.
+\item \code{\link{ADRandApp}}: Graphical user interface for designing adaptive trials with response-adaptive randomization.
 \item \code{\link{GenerateReport}}: Simulation report for any module.
 }
 The package comes with one example data set:
@@ -58,7 +61,7 @@ Multiple case studies are included in this vignette to illustrate the use of thi
 \item \link{FutRuleExample2}: Simulation-based selection of an optimal futility stopping rule (binary endpoint).
 \item \link{FutRuleExample3}: Simulation-based selection of an optimal futility stopping rule (time-to-event endpoint).
 \item \link{EventPredExample}: Simulation-based event prediction in trials with an event-driven design (time-to-event endpoint).
-
+\item \link{ADRandExample}: Simulation-based design of an adaptive dose-finding trial with response-adaptive randomization (normally distributed endpoint).
 }
 
 }

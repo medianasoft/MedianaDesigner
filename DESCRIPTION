@@ -1,15 +1,15 @@
 Package: MedianaDesigner
 Type: Package
 Title: Efficient Simulation-Based Power and Sample Size Calculations for a Broad Class of Late-Stage Clinical Trials
-Version: 0.2
-Date: 2021-07-15
+Version: 0.2.3
+Date: 2021-08-15
 Author: Alex Dmitrienko [aut, cre]
 Authors@R: c(
    person("Alex", "Dmitrienko", email = "admitrienko@mediana.us", role = c("aut", "cre")))
 Depends: R (>= 3.1.2)
-Imports: Rcpp (>= 0.12.10), officer, flextable, devEMF, shiny, shinydashboard, shinyMatrix
+Imports: Rcpp (>= 0.12.10), RcppNumerical, RcppEigen, officer, flextable, devEMF, mvtnorm, shiny, shinydashboard, shinyMatrix
 Suggests: testthat
-LinkingTo: Rcpp
+LinkingTo: Rcpp, RcppEigen, RcppNumerical
 Maintainer: Alex Dmitrienko <admitrienko@mediana.us>
 Description: 
     The following modules are included in the package: 
@@ -22,8 +22,8 @@ License: GPL-3
 LazyLoad: yes
 LazyData: true
 NeedsCompilation: yes
-Packaged: 2021-07-15
+Packaged: 2021-08-15
 Repository: CRAN
-Date/Publication: 2021-07-15
+Date/Publication: 2021-08-15
 URL: https://github.com/medianasoft/MedianaDesigner
 BugReports: https://github.com/medianasoft/MedianaDesigner/issues

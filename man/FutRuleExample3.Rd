@@ -60,8 +60,8 @@ parameters$enrollment_parameter = 9
 # One-sided alpha level
 parameters$alpha = 0.025
 
-# Number of simulations
-parameters$nsims = 1000
+# Number of simulations, you should prefer more
+parameters$nsims = 100
 
 # Run simulations to compute characteristics of the futility stopping rule
 results = FutRule(parameters)

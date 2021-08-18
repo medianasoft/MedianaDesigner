@@ -36,4 +36,11 @@ EventPredApp = function() {
 
 }
 
+ADRandApp = function() {
+
+  appDir = system.file("ADRandApp", package = "MedianaDesigner")
+  shiny::runApp(appDir, display.mode = "normal")
+
+}
+
 # nocov end

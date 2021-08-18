@@ -12,21 +12,23 @@
 
 This package provides efficient simulation-based tools for adaptive designs commonly used in Phase III and seamless Phase II/III trials. The following modules are currently included in the package:
 
-* Adaptive designs with data-driven sample size or event count re-estimation (ADSSMod function).
-* Adaptive designs with data-driven treatment selection (ADTreatSel function).
-* Adaptive designs with data-driven population selection (ADPopSel function).
+* Adaptive trials with data-driven sample size or event count re-estimation (ADSSMod function).
+* Adaptive trials with data-driven treatment selection (ADTreatSel function).
+* Adaptive trials with data-driven population selection (ADPopSel function).
 * Optimal selection of a futility stopping rule (FutRule function).
 * Event prediction in event-driven trials (EventPred function).
+* Adaptive trials with response-adaptive randomization (ADRand function) [experimental module].
 
 For more information on this package, visit [Mediana's web site](http://www.mediana.us/free-software). The latest stable version of the package can be downloaded from [CRAN](https://cran.r-project.org/web/packages/MedianaDesigner/index.html). 
 
-The technical manuals with a detailed description of the statistical methodology implemented in each module can also be found on Mediana's web site: 
+The technical manuals with a detailed description of the statistical methodology implemented in each module can be found on Mediana's web site: 
 
-* [Adaptive designs with data-driven sample size or event count re-estimation](http://www.mediana.us/MedianaDesigner/ADSSMod.pdf).
-* [Adaptive designs with data-driven treatment selection](http://www.mediana.us/MedianaDesigner/ADTreatSel.pdf).
-* [Adaptive designs with data-driven population selection](http://www.mediana.us/MedianaDesigner/ADPopSel.pdf).
+* [Adaptive trials with data-driven sample size or event count re-estimation](http://www.mediana.us/MedianaDesigner/ADSSMod.pdf).
+* [Adaptive trials with data-driven treatment selection](http://www.mediana.us/MedianaDesigner/ADTreatSel.pdf).
+* [Adaptive trials with data-driven population selection](http://www.mediana.us/MedianaDesigner/ADPopSel.pdf).
 * [Optimal selection of a futility stopping rule](http://www.mediana.us/MedianaDesigner/FutRule.pdf).
 * [Event prediction in event-driven trials](http://www.mediana.us/MedianaDesigner/EventPred.pdf).
+* [Adaptive trials with response-adaptive randomization](http://www.mediana.us/MedianaDesigner/ADRand.pdf).
 
 Additional information and multiple case studies can be found in the [online manual](https://medianasoft.github.io/MedianaDesigner).
 
@@ -35,15 +37,17 @@ Additional information and multiple case studies can be found in the [online man
 Key functions included in the package:
 
 * ADSSMod: Simulation-based design of adaptive trials with data-driven sample size or event count re-estimation.
-* ADSSModApp: Graphical user interface to design adaptive trials with data-driven sample size or event count re-estimation.
+* ADSSModApp: Graphical user interface for designing adaptive trials with data-driven sample size or event count re-estimation.
 * ADTreatSel: Simulation-based design of adaptive trials with data-driven treatment selection.
-* ADTreatSelApp: Graphical user interface to design adaptive trials with data-driven treatment selection.
+* ADTreatSelApp: Graphical user interface for designing adaptive trials with data-driven treatment selection.
 * ADPopSel: Simulation-based design of adaptive trials with data-driven population selection.
-* ADPopSelApp: Graphical user interface to design adaptive trials with data-driven population selection.
+* ADPopSelApp: Graphical user interface for designing adaptive trials with data-driven population selection.
 * FutRule: Simulation-based selection of an optimal futility stopping rule at an interim analysis.
 * FutRuleApp: Graphical user interface for an optimal selection of a futility stopping rule.
 * EventPred: Simulation-based event prediction in trials with an event-driven design.
 * EventPredApp: Graphical user interface for event prediction.
+* ADRand: Simulation-based design of adaptive trials with response-adaptive randomization.
+* ADRandApp: Graphical user interface for designing adaptive trials with response-adaptive randomization.
 * GenerateReport: Simulation report for any of the modules.
 
 ## References

@@ -70,8 +70,8 @@ parameters$target_power = 0.9
 # One-sided alpha level
 parameters$alpha = 0.025
 
-# Number of simulations
-parameters$nsims = 1000
+# Number of simulations, you should prefer more
+parameters$nsims = 100
 
 # Run simulations to compute operating characteristics
 results = ADSSMod(parameters)
