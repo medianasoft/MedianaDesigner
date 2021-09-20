@@ -14,3 +14,7 @@ Fixed minor bugs and added the following features:
 2021-08-15 Version 0.2.3
 Fixed minor bugs and added the following module:
 - Experimental module for designing trials with response-adaptive randomization (ADRand function)
+
+2021-09-20 Version 0.3
+Fixed minor bugs and added the following module:
+- Experimental module for designing traditional trials with multiple objectives (MultAdj function)

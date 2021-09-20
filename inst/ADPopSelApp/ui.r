@@ -32,15 +32,10 @@ shinyUI(
               collapsible = FALSE,
               width = 12,
 
-              "The web application computes key operating characteristics 
-              of an adaptive design for a two-arm Phase III clinical trial 
-              with two interim analyses and two pre-defined patient populations 
-              (overall population and subpopulation of biomarker-positive patients). 
-              The first interim analysis supports early stopping for futility 
-              in the overall population and the second interim analysis identifies 
-              the most promising patient population or populations."
+              "The web application computes key operating characteristics of an adaptive design for a two-arm Phase III clinical trial with two interim analyses and two pre-defined patient populations (overall population and subpopulation of biomarker-positive patients). The first interim analysis supports early stopping for futility in the overall population and the second interim analysis identifies the most promising patient population or populations."
             )
           ),
+
 
           fluidRow(
 

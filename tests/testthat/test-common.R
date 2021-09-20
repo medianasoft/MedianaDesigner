@@ -105,4 +105,18 @@ test_that("ContinuousErrorCheck works", {
     info = "Checking for lower value with >= sign"
   )
 
+  expect_error(
+    ContinuousErrorCheck(NULL, 
+                            1, 
+                            lower_values = c(NA),
+                            lower_values_sign = c(NA),
+                            upper_values = c(NA),
+                            upper_values_sign = c(NA),
+                            "Patient enrollment period (enrollment_period)",
+                            c("Value"),
+                            "double",
+                            NULL),
+    info = "Checking for NULL value"
+  )
+
 })

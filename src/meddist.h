@@ -17,7 +17,8 @@ double rcpp_qnorm(const double &x) {
     return vec_output[0];
 }
 
-double rcpp_pt(const double &x, const int &df) {
+//2021-08-30: df type was int
+double rcpp_pt(const double &x, const double &df) {
     NumericVector vec_input(1), vec_output(1);
     vec_input[0] = x;
     vec_output = Rcpp::pt(vec_input, df);
@@ -185,36 +186,35 @@ vector<double> Dropout(const int &n, const int &dropout_distribution, const vect
 
 // # nocov start
 // Multivariate normal distribution (single vector)
-vector<double> MVNormal(const int &m, const vector<double> &mean, const vector<double> &sd, const double &rho) {
+vector<double> MVNormal(const int &m, const vector<double> &mean, const vector<double> &sd, const NumericMatrix &corr) {
 
     int i, j, k;
     double csum;
 
-    NumericMatrix chol(m, m), corr(m, m);
     vector<double> normal_data(m), mv_normal_data(m);
+    NumericMatrix chol(m, m);
 
-    for(i = 0; i< m; i++){
-        for(j = 0; j < m; j++){
-            if (i == j) corr(i, j) = 1.0; else corr(i, j) = rho;
+    for(i = 0; i< m; i++) {
+        for(j = 0; j < m; j++) {
             chol(i, j) = 0.0;
         }
     }    
 
     // Cholesky lower diagonal matrix
-    for(i = 0; i< m; i++){
-            for(j = 0; j < (i + 1); j++){
-                csum = 0;
-                for(k = 0; k < j; k++){
-                    csum += chol(i, k) * chol(j, k);
-                }
-                if (i == j) {
-                    chol(i, j) = sqrt(corr(i, i) - csum);
-                } 
-                else {
-                    chol(i, j) = (corr(i, j) - csum) / chol(j, j);
-                }
+    // http://rosettacode.org/wiki/Cholesky_decomposition
+    for(i = 0; i< m; i++) {
+        for(j = 0; j < (i + 1); j++) {
+            csum = 0.0;
+            for(k = 0; k < j; k++){
+                csum += chol(i, k) * chol(j, k);
+            }
+            if (i == j) {
+                chol(i, j) = sqrt(corr(i, i) - csum);
+            } else {
+                chol(i, j) = (corr(i, j) - csum) / chol(j, j);
             }
         }
+    }
 
     // Generate uncorrelated normal vectors
     for (i = 0; i< m; i++) {
@@ -232,6 +232,18 @@ vector<double> MVNormal(const int &m, const vector<double> &mean, const vector<d
 
     return mv_normal_data;
 
+}
+
+vector<double> MVNormalRho(const int &m, const vector<double> &mean, const vector<double> &sd, const double &rho) {
+    NumericMatrix corr(m, m);
+
+    for(unsigned i = 0; i < m; i++){
+        for(unsigned j = 0; j < m; j++){
+            if (i == j) corr(i, j) = 1.0; else corr(i, j) = rho;
+        }
+    }
+
+    return MVNormal(m, mean, sd, corr);
 }
 // # nocov end
 

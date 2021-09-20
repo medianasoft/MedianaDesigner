@@ -37,7 +37,6 @@ vector<int> FillTreatmentIndicators(const vector<int> &n) {
     return result;  
 }
 
-// // nocov start
 // Extract a row
 vector<double> ExtractRow(const NumericMatrix &mat, const int &index) {
 
@@ -49,7 +48,6 @@ vector<double> ExtractRow(const NumericMatrix &mat, const int &index) {
 
 }
 
-// #nocov start
 // Extract a column
 vector<double> ExtractColumn(const NumericMatrix &mat, const int &index) {
 
@@ -60,7 +58,6 @@ vector<double> ExtractColumn(const NumericMatrix &mat, const int &index) {
     return column;     
 
 }
-// # nocov end
 
 double Sq(const double &x) {
 

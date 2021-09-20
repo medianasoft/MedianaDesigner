@@ -1,13 +1,13 @@
 Package: MedianaDesigner
 Type: Package
 Title: Efficient Simulation-Based Power and Sample Size Calculations for a Broad Class of Late-Stage Clinical Trials
-Version: 0.2.3
-Date: 2021-08-15
+Version: 0.3
+Date: 2021-09-20
 Author: Alex Dmitrienko [aut, cre]
 Authors@R: c(
    person("Alex", "Dmitrienko", email = "admitrienko@mediana.us", role = c("aut", "cre")))
 Depends: R (>= 3.1.2)
-Imports: Rcpp (>= 0.12.10), RcppNumerical, RcppEigen, officer, flextable, devEMF, mvtnorm, shiny, shinydashboard, shinyMatrix
+Imports: Rcpp (>= 0.12.10), RcppNumerical, officer, flextable, devEMF, mvtnorm, shiny, shinydashboard, shinyMatrix
 Suggests: testthat
 LinkingTo: Rcpp, RcppEigen, RcppNumerical
 Maintainer: Alex Dmitrienko <admitrienko@mediana.us>
@@ -18,12 +18,14 @@ Description:
     Adaptive designs with data-driven population selection, 
     Optimal selection of a futility stopping rule, 
     Event prediction in event-driven trials.
+    Adaptive trials with response-adaptive randomization (experimental module). 
+    Traditional trials with multiple objectives (experimental module).
 License: GPL-3
 LazyLoad: yes
 LazyData: true
 NeedsCompilation: yes
-Packaged: 2021-08-15
+Packaged: 2021-09-20
 Repository: CRAN
-Date/Publication: 2021-08-15
+Date/Publication: 2021-09-20
 URL: https://github.com/medianasoft/MedianaDesigner
 BugReports: https://github.com/medianasoft/MedianaDesigner/issues

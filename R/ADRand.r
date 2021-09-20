@@ -15,6 +15,8 @@ rowMax = function(x) {
 
 }
 
+# nocov start
+
 # Truncated exponential distribution
 TruncExpDist = function(x, rate, max) {
 
@@ -48,6 +50,7 @@ TruncatedExponentialMedian = function(median, max) {
 
 }
 
+# nocov end
 
 ADRand = function(parameters) {
   
@@ -344,7 +347,7 @@ ADRand = function(parameters) {
                              NA) 
 
     } else {
-      parameters$nsims = 1000
+      parameters$nsims = 1000     # nocov
     }
 
     if (!is.null(parameters$balance)) {
@@ -386,10 +389,12 @@ ADRand = function(parameters) {
         },
 
         warning = function(c) {
+          # nocov start
           msg <- conditionMessage(c)
           if ( grepl("the line search step became smaller than the minimum value allowed", msg, fixed = TRUE) ) {
             invokeRestart("muffleWarning")
           }
+          # nocov end
         }
 
     )
@@ -550,7 +555,9 @@ MCPModCriticalValue = function(parameters, n_groups) {
 
   if (det(corr_matrix) > 1E-10) {
 
+    # nocov start
     crit_value = qmvt(p = 1 - alpha, tail = "lower.tail", df = Inf, corr = corr_matrix, maxpts = 30000, abseps = 0.001, releps = 0, algorithm = GenzBretz())$quantile
+    # nocov end
 
   } else crit_value = qnorm(1 - alpha)
 
@@ -601,9 +608,11 @@ ADRandReportDoc = function(results) {
 
     column_names = c("Parameter", "Value")
 
+    # nocov start
     if (parameters$direction_index == 1) label = "A higher value of the endpoint indicates a more favorable outcome"
 
     if (parameters$direction_index == 2) label = "A lower value of the endpoint indicates a more favorable outcome"
+    # nocov end
 
     col1 = c("Endpoint type", "Direction of favorable outcome") 
     col2 = c(endpoint_list[parameters$endpoint_index], label)

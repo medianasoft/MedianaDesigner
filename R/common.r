@@ -304,6 +304,7 @@ ReportDoc = function(results) {
   if (class(results) == "FutRuleResults") doc = FutRuleReportDoc(results)
   if (class(results) == "EventPredResults") doc = EventPredReportDoc(results)
   if (class(results) == "ADRandResults") doc = ADRandReportDoc(results)
+  if (class(results) == "MultAdjResults") doc = MultAdjReportDoc(results)
 
   return(doc)  
 
@@ -317,7 +318,7 @@ GenerateReport = function(results, report_filename) {
   print(ReportDoc(results), target = report_filename)          
 
 }
-# End of ReportDoc       
+# End of GenerateReport       
 
 #' Print method for ADSSModResults
 #'
@@ -382,5 +383,16 @@ print.EventPredResults = function (x, ...) {
 #' @export
 #' @exportS3Method
 print.ADRandResults = function (x, ...) {
+  cat("Use the GenerateReport function to create a detailed simulation report.\n")  # nocov
+}
+
+#' Print method for MultAdjResults
+#'
+#' @param x MultAdjResults object
+#' @param ... Arguments passed to or from other methods
+#'
+#' @export
+#' @exportS3Method
+print.MultAdjResults = function (x, ...) {
   cat("Use the GenerateReport function to create a detailed simulation report.\n")  # nocov
 }

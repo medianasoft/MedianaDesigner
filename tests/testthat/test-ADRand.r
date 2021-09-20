@@ -38,6 +38,9 @@ normalCase <- list(
   # Fixed randomization ratio in the placebo arm
   ratio_placebo = 0.25,
 
+  # Balance parameter for adaptive randomization
+  balance = 1,
+
   # Non-linear parameters of the candidate dose-response models used
   # in the MCPMod method
   exponential_model_parameter = 600,
@@ -63,7 +66,7 @@ test_that("Success run ADRand with Normal case", {
   results = ADRand(normalCase)
   expect_is(results, "ADRandResults")
   expect_equal(length(results), 2)
-  expect_equal(length(results$parameters), length(normalCase)+9)
+  expect_equal(length(results$parameters), length(normalCase)+8)
   expect_equal(length(results$simulations), 5)
   
   # Calculate summary
@@ -105,6 +108,39 @@ test_that("Success run ADRand with Normal case", {
     # Check for report generation
   ADRandReportDoc(results)
   GenerateReport(results, tempfile(fileext = ".docx"))
+})
+
+test_that("Success run ADRand with Normal case with insignificant changes", {  
+  # Remove parameters that accepts default value
+  changedNormalCase <- normalCase
+  changedNormalCase['direction'] = NULL
+  changedNormalCase['dropout_rate'] = NULL
+  changedNormalCase['alpha'] = NULL
+  changedNormalCase['balance'] = NULL
+  changedNormalCase['nsims'] = 25
+
+  # Run simulations
+  results = ADRand(changedNormalCase)
+  expect_is(results, "ADRandResults")
+  expect_equal(length(results), 2)
+  expect_equal(length(results$simulations), 5)
+})
+
+test_that("Success run ADRand with Normal case with changed direction", {  
+  # Remove parameters that accept default value
+  changedNormalCase <- normalCase
+  changedNormalCase['direction'] = "Lower"
+  changedNormalCase['delta'] = -10
+  changedNormalCase['nsims'] = 25
+
+  # Run simulations
+  results = ADRand(changedNormalCase)
+  expect_is(results, "ADRandResults")
+  expect_equal(length(results), 2)
+  expect_equal(length(results$parameters), length(normalCase)+8)
+  expect_equal(length(results$simulations), 5)
+
+  # TODO: Check result
 })
 
 # TODO: More success runs
@@ -355,5 +391,14 @@ test_that("Input parameters errors check ADRand", {
     checkSize = FALSE,
     checkMin = 0,
     checkMax = 10001)
+
+})
+
+test_that("Input parameters errors check ADRandReportDoc", {
+
+  expect_error(
+    ADRandReportDoc(""),
+    info = "Checking for wrong parameter type for report generator"
+  )
 
 })

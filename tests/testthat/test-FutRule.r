@@ -131,9 +131,8 @@ test_that("Success run FutRule with Normal case", {
   optimal_lower = round(100 * min(zone), 1)
   optimal_upper = round(100 * max(zone), 1)
 
-  expect_true(
-    abs(optimal_lower - 6) < 4, 
-    info = paste("optimal_lower(",optimal_lower,") is out of range 6±4"))
+  expect_equal(optimal_lower, 6, 5, 
+    info = paste("optimal_lower(",optimal_lower,") is out of range 6±5"))
   expect_true(
     abs(optimal_upper - 65) < 30,
     info = paste("optimal_upper(",optimal_upper,") is out of range 65±30"))

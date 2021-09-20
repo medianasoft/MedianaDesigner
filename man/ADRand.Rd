@@ -27,6 +27,7 @@ ADRand(parameters)
     \item \code{control_sd}{: Numeric value defining the standard deviation of the primary endpoint in the placebo arm. This value must be positive. }
     \item \code{treatment_mean}{: Numeric vector defining the mean of the primary endpoint in each dosing arm.}
     \item \code{treatment_sd}{: Numeric vector defining the standard deviation of the primary endpoint in each dosing arm.}
+    \item \code{treatment_period}{: Numeric value defining the length of the treatment period in the trial.}
     \item \code{ratio_placebo}{: Numeric value defining the fixed randomization ratio in the placebo arm. This value must be between 0 and 1.}
     \item \code{balance}{: Numeric value defining the degree of balance for adaptive randomization. This value must be between 0 and 3.}    
     \item \code{delta}{: Numeric value defining the threshold for a clinically meaningful improvement over placebo.}

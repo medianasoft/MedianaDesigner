@@ -72,6 +72,39 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// MultAdjC1
+List MultAdjC1(const List& parameters_arg);
+RcppExport SEXP _MedianaDesigner_MultAdjC1(SEXP parameters_argSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const List& >::type parameters_arg(parameters_argSEXP);
+    rcpp_result_gen = Rcpp::wrap(MultAdjC1(parameters_arg));
+    return rcpp_result_gen;
+END_RCPP
+}
+// MultAdjC2
+List MultAdjC2(const List& parameters_arg);
+RcppExport SEXP _MedianaDesigner_MultAdjC2(SEXP parameters_argSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const List& >::type parameters_arg(parameters_argSEXP);
+    rcpp_result_gen = Rcpp::wrap(MultAdjC2(parameters_arg));
+    return rcpp_result_gen;
+END_RCPP
+}
+// MultAdjC3
+List MultAdjC3(const List& parameters_arg);
+RcppExport SEXP _MedianaDesigner_MultAdjC3(SEXP parameters_argSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const List& >::type parameters_arg(parameters_argSEXP);
+    rcpp_result_gen = Rcpp::wrap(MultAdjC3(parameters_arg));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_MedianaDesigner_ADSSModC", (DL_FUNC) &_MedianaDesigner_ADSSModC, 1},
@@ -80,6 +113,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_MedianaDesigner_FutRuleC", (DL_FUNC) &_MedianaDesigner_FutRuleC, 1},
     {"_MedianaDesigner_EventPredEventCount", (DL_FUNC) &_MedianaDesigner_EventPredEventCount, 1},
     {"_MedianaDesigner_ADRandC", (DL_FUNC) &_MedianaDesigner_ADRandC, 1},
+    {"_MedianaDesigner_MultAdjC1", (DL_FUNC) &_MedianaDesigner_MultAdjC1, 1},
+    {"_MedianaDesigner_MultAdjC2", (DL_FUNC) &_MedianaDesigner_MultAdjC2, 1},
+    {"_MedianaDesigner_MultAdjC3", (DL_FUNC) &_MedianaDesigner_MultAdjC3, 1},
     {NULL, NULL, 0}
 };
 

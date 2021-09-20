@@ -4,7 +4,7 @@
 Simulation-based design of dose-finding Phase II trials with response-adaptive randomization (normally distributed endpoint)
 }
 \description{
-Consider a Phase II trial to be conducted to evaluate the efficacy and safety profiles of several doses of an experimental treatment compared to placebo. The trial will be conducted for the treatment of cognitive impairment in patients with schizophrenia. The primary endpoint is a continuous, normally distributed endpoint (MCCB overall composite score) with a larger value indicating favorable effect. The treatment effect will be evaluated at 3 months after randomization. A multi-stage adaptive design will be employed in the trial to evaluate the dose-response relationship for the treatment while assigning most patients to the best performing doses. This will be accomplished using a response-adaptive randomization approach. 
+Consider a Phase II trial to be conducted to evaluate the efficacy and safety profiles of several doses of an experimental treatment compared to placebo. The trial will be conducted for the treatment of cognitive impairment in patients with schizophrenia. The primary endpoint is a continuous, normally distributed endpoint (MCCB overall composite score) with a larger value indicating favorable effect. The treatment effect will be evaluated at 3 months after randomization, i.e., the treatment period will 3-month long. A multi-stage adaptive design will be employed in the trial to evaluate the dose-response relationship for the treatment while assigning most patients to the best performing doses. This will be accomplished using a response-adaptive randomization approach. 
 
 The following design parameters will be used in this example:
 \itemize{
@@ -88,7 +88,7 @@ parameters$logistic_model_parameters = c(125, 25)
 parameters$alpha = 0.025
 
 # Number of simulations, you should prefer more
-parameters$nsims = 50
+parameters$nsims = 35
 
 # Run simulations to compute operating characteristics
 results = ADRand(parameters)

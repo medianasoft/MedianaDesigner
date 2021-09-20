@@ -7,12 +7,14 @@
 \alias{EventPredReportDoc}
 \alias{FutRuleReportDoc}
 \alias{ADRandReportDoc}
+\alias{MultAdjReportDoc}
 \alias{print.ADSSModResults}
 \alias{print.ADTreatSelResults}
 \alias{print.ADPopSelResults}
 \alias{print.FutRuleResults}
 \alias{print.EventPredResults}
 \alias{print.ADRandResults}
+\alias{print.MultAdjResults}
 
 \title{
 Simulation report  

@@ -43,4 +43,11 @@ ADRandApp = function() {
 
 }
 
+MultAdjApp = function() {
+
+  appDir = system.file("MultAdjApp", package = "MedianaDesigner")
+  shiny::runApp(appDir, display.mode = "normal")
+
+}
+
 # nocov end

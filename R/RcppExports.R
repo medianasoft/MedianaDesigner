@@ -25,3 +25,15 @@ ADRandC <- function(parameters_arg) {
     .Call(`_MedianaDesigner_ADRandC`, parameters_arg)
 }
 
+MultAdjC1 <- function(parameters_arg) {
+    .Call(`_MedianaDesigner_MultAdjC1`, parameters_arg)
+}
+
+MultAdjC2 <- function(parameters_arg) {
+    .Call(`_MedianaDesigner_MultAdjC2`, parameters_arg)
+}
+
+MultAdjC3 <- function(parameters_arg) {
+    .Call(`_MedianaDesigner_MultAdjC3`, parameters_arg)
+}
+

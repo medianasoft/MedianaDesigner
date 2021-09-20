@@ -31,14 +31,7 @@ shinyUI(
               collapsible = FALSE,
               width = 12,
 
-              "The web application computes operating characteristics 
-              of a multi-arm trial design with a single interim analysis. 
-              A futility stopping rule will be applied at this interim 
-              look and the trial will be stopped early for futility 
-              if the predicted probability of success (conditional power) 
-              is less than a pre-defined futility threshold in all treatment arms. 
-              An optimal value of the futility threshold is derived by maximizing 
-              the sensitivity and specificity rates."
+              "The web application computes operating characteristics of a multi-arm trial design with a single interim analysis. A futility stopping rule will be applied at this interim look and the trial will be stopped early for futility if the predicted probability of success (conditional power) is less than a pre-defined futility threshold in all treatment arms. An optimal value of the futility threshold is derived by maximizing the sensitivity and specificity rates."
             )
           ),
 

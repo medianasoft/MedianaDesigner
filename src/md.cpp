@@ -9,7 +9,8 @@ using namespace Rcpp;
 #include "medsupport.h"
 #include "meddist.h"
 #include "medstattest.h"
-//#include "meddebug.h"
+#include "medmult.h"
+#include "varcuboid.h"
 
 #include <exception>
 #include <memory>
@@ -21,7 +22,9 @@ using namespace Rcpp;
 #include <fstream>
 #include <string>
 
+//TODO: Move to calculation structures for ADRand
 int n_models = 4, direction_index_local = 1;
+//TODO: Move to calculation structures for ADRand
 double final_gradient;
 
 vector<double> HochbergOutcome(const vector<double> &pvalue, const double &alpha) {
@@ -2370,6 +2373,9 @@ List EventPredEventCount(const List &parameters_arg) {
 // [[Rcpp::export]]
 List ADRandC(const List &parameters_arg) {
 
+    // TODO: Get this variables from parameters?
+    //int n_models = 4, direction_index_local = 1;
+
     List parameters(parameters_arg);
 
     vector<int> stage_sample_size = as<vector<int>>(parameters["stage_sample_size"]);
@@ -2552,6 +2558,8 @@ List ADRandC(const List &parameters_arg) {
                 post_prob[i - 1] = 0.0;
                 for (j = 0; j < nsamples; j++) post_prob[i - 1] += (current_sample[j] >= placebo_sample[j] + delta);
                 post_prob[i - 1] /= (nsamples + 0.0);   
+
+                if (isnan(post_prob[i - 1])) post_prob[i - 1] = 1.0;
             }
 
             denom = 0.0;
@@ -2559,8 +2567,15 @@ List ADRandC(const List &parameters_arg) {
 
             // Update the randomization ratio
             randomization_ratio[0] = ratio_placebo;
-            for (i = 1; i < n_doses; i++) {
-                randomization_ratio[i] = (1.0 - ratio_placebo) * pow(post_prob[i - 1], balance) / denom;
+
+            if (denom > 0.0) {
+                for (i = 1; i < n_doses; i++) {
+                    randomization_ratio[i] = (1.0 - ratio_placebo) * pow(post_prob[i - 1], balance) / denom;
+                }
+            } else {
+                for (i = 1; i < n_doses; i++) {
+                    randomization_ratio[i] = (1.0 - ratio_placebo) / (n_doses - 1.0);
+                }               
             }
 
         }
@@ -2589,3 +2604,419 @@ List ADRandC(const List &parameters_arg) {
                         Named("stage_sample_size") = stage_sample_size_matrix);
 
 }
+// [[Rcpp::export]]
+List MultAdjC1(const List &parameters_arg) {
+
+    List parameters(parameters_arg);
+
+    vector<int> sample_size = as<vector<int>>(parameters["sample_size"]);
+    int max_sample_size = as<int>(parameters["max_sample_size"]);
+
+    int ncomparisons = as<int>(parameters["n_comparisons"]);
+    int mult_test_index = as<int>(parameters["mult_test_index"]);
+
+    int direction = as<int>(parameters["direction_index"]);
+
+    int endpoint_index = as<int>(parameters["endpoint_index"]);
+
+    vector<double> means = as<vector<double>>(parameters["means"]);
+    vector<double> sds = as<vector<double>>(parameters["sds"]);
+    vector<double> rates = as<vector<double>>(parameters["rates"]);
+
+    vector<double> weight = as<vector<double>>(parameters["weights"]);
+    vector<double> transition = as<vector<double>>(parameters["ctransition"]);
+
+    int nsims = as<int>(parameters["nsims"]);
+
+    /*******************************************************************/
+
+    vector<double> temp_vec, control_sample, treatment_sample, pvalue(ncomparisons), adj_pvalue(ncomparisons);
+
+    vector<int> stratum_list;
+
+    int i, j, sim;
+
+    NumericMatrix sim_results(nsims, ncomparisons + ncomparisons), overall_treatment_sample(ncomparisons, max_sample_size); 
+
+    /*******************************************************************/
+
+    for (sim = 0; sim < nsims; sim++) {
+
+        // Normal and binary endpoints
+        if (endpoint_index == 1 || endpoint_index == 2) {
+
+            // Control samples
+            if (endpoint_index == 1) control_sample = Normal(sample_size[0], means[0], sds[0]);
+            if (endpoint_index == 2) control_sample = Binary(sample_size[0], rates[0]);
+
+            // Treatment samples
+            for (i = 0; i < ncomparisons; i++) {
+
+                for (j = 0; j < max_sample_size; j++) overall_treatment_sample(i, j) = 0.0;
+
+                if (endpoint_index == 1) temp_vec = Normal(sample_size[i + 1], means[i + 1], sds[i + 1]);
+                if (endpoint_index == 2) temp_vec = Binary(sample_size[i + 1], rates[i + 1]);
+
+                for (j = 0; j < sample_size[i + 1]; j++) overall_treatment_sample(i, j) = temp_vec[j];
+
+            }
+
+            // Final analysis
+
+            for (i = 0; i < ncomparisons; i++) {
+
+                treatment_sample.clear();
+                for (j = 0; j < sample_size[i + 1]; j++) treatment_sample.push_back(overall_treatment_sample(i, j));
+
+                if (endpoint_index == 1) pvalue[i] = TTest(control_sample, treatment_sample, 0.0, direction).pvalue;
+                if (endpoint_index == 2) pvalue[i] = PropTest(control_sample, treatment_sample, 0.0, direction).pvalue;
+
+            }
+
+        }
+        // Normal and binary endpoints
+
+        // Multiplicity adjustment
+        adj_pvalue = TradMultAdj(mult_test_index, pvalue, weight, transition);
+
+        // Summary statistics for each simulation run
+
+        for (i = 0; i < ncomparisons; i++) sim_results(sim, i) = pvalue[i];
+        for (i = 0; i < ncomparisons; i++) sim_results(sim, i + ncomparisons) = adj_pvalue[i];
+
+    }
+    // End of simulations
+
+    /*******************************************************************/
+
+    // Return simulation results
+
+    return List::create(Named("sim_results") = sim_results);
+
+}
+// End of MultAdjC1
+
+// [[Rcpp::export]]
+List MultAdjC2(const List &parameters_arg) {
+
+    List parameters(parameters_arg);
+
+    vector<int> sample_size = as<vector<int>>(parameters["sample_size"]);
+
+    int nendpoints = as<int>(parameters["n_endpoints"]);
+    int mult_test_index = as<int>(parameters["mult_test_index"]);
+
+    int direction = as<int>(parameters["direction_index"]);
+
+    int endpoint_index = as<int>(parameters["endpoint_index"]);
+
+    NumericMatrix corr = as<NumericMatrix>(parameters["endpoint_correlation"]);
+    double corr_sum = as<double>(parameters["corr_sum"]);
+
+    vector<double> control_mean = as<vector<double>>(parameters["control_mean"]);
+    vector<double> treatment_mean = as<vector<double>>(parameters["treatment_mean"]);
+    vector<double> control_sd = as<vector<double>>(parameters["control_sd"]);
+    vector<double> treatment_sd = as<vector<double>>(parameters["treatment_sd"]);
+    vector<double> control_rate = as<vector<double>>(parameters["control_rate"]);
+    vector<double> treatment_rate = as<vector<double>>(parameters["treatment_rate"]);
+
+    vector<double> weight = as<vector<double>>(parameters["weights"]);
+    vector<double> transition = as<vector<double>>(parameters["ctransition"]);
+
+    int nsims = as<int>(parameters["nsims"]);
+
+    /*******************************************************************/
+
+    double overall_pvalue, overall_test_stat;
+
+    vector<double> temp_vec, control_sample, treatment_sample, pvalue(nendpoints), test_stat(nendpoints), adj_pvalue(nendpoints);
+
+    vector<int> stratum_list;
+
+    int i, j, sim, ntotal;
+
+    ntotal = SumVecInt(sample_size);
+
+    TestResult test_result;
+
+    NumericMatrix sim_results(nsims, nendpoints + nendpoints), overall_control_sample(nendpoints, sample_size[0]), overall_treatment_sample(nendpoints, sample_size[1]); 
+
+    /*******************************************************************/
+
+    for (sim = 0; sim < nsims; sim++) {
+
+        // Normal endpoints
+        if (endpoint_index == 1) {
+
+            // Control sample
+            for (i = 0; i < sample_size[0]; i++) {
+                temp_vec = MVNormal(nendpoints, control_mean, control_sd, corr); 
+                for (j = 0; j < nendpoints; j++) overall_control_sample(j, i) = temp_vec[j];  
+            }      
+
+            // Treatment sample
+            for (i = 0; i < sample_size[1]; i++) {
+                temp_vec = MVNormal(nendpoints, treatment_mean, treatment_sd, corr); 
+                for (j = 0; j < nendpoints; j++) overall_treatment_sample(j, i) = temp_vec[j];  
+            }      
+
+            // Final analysis
+            for (i = 0; i < nendpoints; i++) {
+
+                control_sample.clear();
+                for (j = 0; j < sample_size[0]; j++) control_sample.push_back(overall_control_sample(i, j));
+
+                treatment_sample.clear();
+                for (j = 0; j < sample_size[1]; j++) treatment_sample.push_back(overall_treatment_sample(i, j));
+
+                test_result = TTest(control_sample, treatment_sample, 0.0, direction);    
+                pvalue[i] = test_result.pvalue;
+                test_stat[i] = test_result.test_stat;
+
+            }
+
+        }
+        // Normal endpoints
+
+        // Binary endpoints
+        if (endpoint_index == 2) {
+
+            // Control sample
+            for (i = 0; i < sample_size[0]; i++) {
+                temp_vec = MVNormal(nendpoints, control_mean, control_sd, corr); 
+                for (j = 0; j < nendpoints; j++) {
+                    // Convert to binary outcomes
+                    overall_control_sample(j, i) = (temp_vec[j] <= rcpp_qnorm(control_rate[j]));  
+                }
+            }      
+
+            // Treatment sample
+            for (i = 0; i < sample_size[1]; i++) {
+                temp_vec = MVNormal(nendpoints, treatment_mean, treatment_sd, corr); 
+                for (j = 0; j < nendpoints; j++) {
+                    // Convert to binary outcomes
+                    overall_treatment_sample(j, i) = (temp_vec[j] <= rcpp_qnorm(treatment_rate[j]));  
+                }
+            }      
+
+            // Final analysis
+            for (i = 0; i < nendpoints; i++) {
+
+                control_sample.clear();
+                for (j = 0; j < sample_size[0]; j++) control_sample.push_back(overall_control_sample(i, j));
+
+                treatment_sample.clear();
+                for (j = 0; j < sample_size[1]; j++) treatment_sample.push_back(overall_treatment_sample(i, j));
+
+                test_result = PropTest(control_sample, treatment_sample, 0.0, direction);    
+                pvalue[i] = test_result.pvalue;
+                test_stat[i] = test_result.test_stat;
+
+            }
+
+        }
+        // Binary endpoints
+
+        // Multiplicity adjustment
+        if (mult_test_index <= 6) {
+
+            adj_pvalue = TradMultAdj(mult_test_index, pvalue, weight, transition);
+
+            // Summary statistics for each simulation run
+
+            for (i = 0; i < nendpoints; i++) sim_results(sim, i) = pvalue[i];
+            for (i = 0; i < nendpoints; i++) sim_results(sim, i + nendpoints) = adj_pvalue[i];
+
+        }
+
+        // Global test
+        if (mult_test_index == 7) {
+
+            overall_test_stat = sum(test_stat) / sqrt(corr_sum);
+            overall_pvalue = 1.0 - rcpp_pt(overall_test_stat, 0.5 * (ntotal - 2.0) * (1.0 + 1.0 / Sq(nendpoints + 0.0)));
+
+            // Summary statistics for each simulation run
+            for (i = 0; i < nendpoints; i++) sim_results(sim, i) = pvalue[i];
+            sim_results(sim, nendpoints) = overall_pvalue;
+            for (i = 1; i < nendpoints; i++) sim_results(sim, i + nendpoints) = 0.0;
+
+        }
+
+    }
+    // End of simulations
+
+    /*******************************************************************/
+
+    // Return simulation results
+
+    return List::create(Named("sim_results") = sim_results);
+
+}
+// End of MultAdjC2
+
+// [[Rcpp::export]]
+List MultAdjC3(const List &parameters_arg) {
+
+    List parameters(parameters_arg);
+
+    vector<int> sample_size = as<vector<int>>(parameters["sample_size"]);
+    int max_sample_size = as<int>(parameters["max_sample_size"]);
+
+    int ncomparisons = as<int>(parameters["n_comparisons"]);
+    int nendpoints = as<int>(parameters["n_endpoints"]);
+    int mult_test_index = as<int>(parameters["mult_test_index"]);
+
+    int direction = as<int>(parameters["direction_index"]);
+
+    int endpoint_index = as<int>(parameters["endpoint_index"]);
+
+    NumericMatrix corr = as<NumericMatrix>(parameters["endpoint_correlation"]);
+
+    vector<double> control_mean = as<vector<double>>(parameters["control_mean"]);
+    vector<double> control_sd = as<vector<double>>(parameters["control_sd"]);
+    NumericMatrix treatment_mean = as<NumericMatrix>(parameters["treatment_mean"]);
+    NumericMatrix treatment_sd = as<NumericMatrix>(parameters["treatment_sd"]);
+    vector<double> control_rate = as<vector<double>>(parameters["control_rate"]);
+    NumericMatrix treatment_rate = as<NumericMatrix>(parameters["treatment_rate"]);
+
+    int nsims = as<int>(parameters["nsims"]);
+
+    vector<double> gamma = as<vector<double>>(parameters["mult_test_gamma"]);
+    int method = as<int>(parameters["mult_method_index"]);
+
+    /*******************************************************************/
+
+    int i, j, k, l, sim, nhypotheses = nendpoints * ncomparisons;
+
+    vector<double> temp_vec(nendpoints), control_sample, treatment_sample, pvalue(nhypotheses), adj_pvalue(nhypotheses), current_treatment_mean, current_treatment_sd, temp_mean, temp_sd;
+
+    vector<int> stratum_list;
+
+    NumericMatrix sim_results(nsims, nhypotheses + nhypotheses), overall_control_sample(nendpoints, sample_size[0]), overall_treatment_sample(nendpoints, max_sample_size); 
+
+    VariableCuboid overall_treatment_sample_mat(ncomparisons, nendpoints, max_sample_size);
+
+    /*******************************************************************/
+
+    for (sim = 0; sim < nsims; sim++) {
+
+        // Normal endpoints
+        if (endpoint_index == 1) {
+
+            // Control sample
+            for (i = 0; i < sample_size[0]; i++) {
+                temp_vec = MVNormal(nendpoints, control_mean, control_sd, corr); 
+                for (j = 0; j < nendpoints; j++) overall_control_sample(j, i) = temp_vec[j];  
+            }      
+
+            // Treatment samples
+            for (k = 0; k < ncomparisons; k++) {
+
+                current_treatment_mean = ExtractColumn(treatment_mean, k);
+                current_treatment_sd = ExtractColumn(treatment_sd, k);
+
+                for (i = 0; i < sample_size[k + 1]; i++) {
+
+                    temp_vec = MVNormal(nendpoints, current_treatment_mean, current_treatment_sd, corr); 
+
+                    for (j = 0; j < nendpoints; j++) {
+                        overall_treatment_sample_mat(k, j, i) = temp_vec[j];  
+                    }
+
+                }      
+
+            }
+
+            // Hypothesis tests
+            l = 0;
+            for (i = 0; i < nendpoints; i++) {
+
+                control_sample.clear();
+                for (j = 0; j < sample_size[0]; j++) control_sample.push_back(overall_control_sample(i, j));
+
+                for (k = 0; k < ncomparisons; k++) {
+
+                    treatment_sample.clear();
+                    for (j = 0; j < sample_size[k + 1]; j++) treatment_sample.push_back(overall_treatment_sample_mat(k, i, j)); 
+
+                    pvalue[l] = TTest(control_sample, treatment_sample, 0.0, direction).pvalue;
+
+                    l++;
+
+                }
+
+            }
+
+        }
+        // Normal endpoints
+        
+        // Binary endpoints
+        if (endpoint_index == 2) {
+
+            temp_mean = fillvec(nendpoints, 0.0);
+            temp_sd = fillvec(nendpoints, 1.0);                
+
+            // Control sample
+            for (i = 0; i < sample_size[0]; i++) {
+
+                temp_vec = MVNormal(nendpoints, temp_mean, temp_sd, corr); 
+                // Convert to binary outcomes
+                for (j = 0; j < nendpoints; j++) overall_control_sample(j, i) = (temp_vec[j] <= rcpp_qnorm(control_rate[j]));  
+            }      
+
+            // Treatment samples
+            for (k = 0; k < ncomparisons; k++) {
+
+                for (i = 0; i < sample_size[k + 1]; i++) {
+
+                    temp_vec = MVNormal(nendpoints, temp_mean, temp_sd, corr); 
+                    // Convert to binary outcomes
+                    for (j = 0; j < nendpoints; j++) overall_treatment_sample_mat(k, j, i) = (temp_vec[j] <= rcpp_qnorm(treatment_rate(j, k)));   
+
+                }      
+
+            }
+
+            // Hypothesis tests
+            l = 0;
+            for (i = 0; i < nendpoints; i++) {
+
+                control_sample.clear();
+                for (j = 0; j < sample_size[0]; j++) control_sample.push_back(overall_control_sample(i, j));
+
+                for (k = 0; k < ncomparisons; k++) {
+
+                    treatment_sample.clear();
+                    for (j = 0; j < sample_size[k + 1]; j++) treatment_sample.push_back(overall_treatment_sample_mat(k, i, j)); 
+
+                    pvalue[l] = PropTest(control_sample, treatment_sample, 0.0, direction).pvalue;
+
+                    l++;
+
+                }
+
+            }
+
+        }
+        // Binary endpoints
+
+        // Multiplicity adjustment
+        adj_pvalue = MixtureProcAdjP(nendpoints, ncomparisons, pvalue, mult_test_index, gamma, method);
+
+        // Summary statistics for each simulation run
+
+        for (i = 0; i < nhypotheses; i++) sim_results(sim, i) = pvalue[i];
+        for (i = 0; i < nhypotheses; i++) sim_results(sim, i + nhypotheses) = adj_pvalue[i];
+
+
+    }
+    // End of simulations
+
+    /*******************************************************************/
+
+    // Return simulation results
+
+    return List::create(Named("sim_results") = sim_results);
+
+}
+// End of MultAdjC3

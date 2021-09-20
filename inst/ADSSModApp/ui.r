@@ -32,11 +32,7 @@ shinyUI(
               collapsible = FALSE,
               width = 12,
 
-              "The web application computes key operating characteristics 
-              of an adaptive design for a two-arm Phase III clinical trial 
-              with two interim analyses. The first interim analysis 
-              supports early stopping for futility and the second interim analysis 
-              supports an option to increase the sample size or number of events."
+              "The web application computes key operating characteristics of an adaptive design for a two-arm Phase III clinical trial with two interim analyses. The first interim analysis supports early stopping for futility and the second interim analysis supports an option to increase the sample size or number of events."
             )
           ),
 
