@@ -18,3 +18,9 @@ Fixed minor bugs and added the following module:
 2021-09-20 Version 0.3
 Fixed minor bugs and added the following module:
 - Experimental module for designing traditional trials with multiple objectives (MultAdj function)
+
+2021-10-07 Version 0.4
+Added the following features:
+- Updated the summary of sensitivity and specificity curves in the simulation report (FutRule function).
+- Added more flexible treatment selection rules and multiplicity adjustments (ADTreatSel function).
+- Added Holm-based gatekeeping procedures (MultAdj function).

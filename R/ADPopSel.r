@@ -407,6 +407,11 @@ ADPopSel = function(parameters) {
 
   sim_results = simulations$sim_results
 
+  # Add column names
+  column_names = c("trad_sign_outcome_op", "trad_sign_outcome_bplus", "adapt_sign_outcome_op", "adapt_sign_outcome_bplus", "ia2_cp", "futility_flag", "effect_size_bminus", "effect_size_bplus", "selection_flag_op_only", "selection_flag_bplus_only", "selection_flag_both", "ia1_time", "ia2_time", "fa_time_op_only", "fa_time_bplus_only") 
+
+  colnames(sim_results) = column_names
+
   sim_summary = list()
 
   nsims = parameters$nsims

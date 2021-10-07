@@ -144,7 +144,7 @@ shinyServer(function(input, output, session) {
 
     if (n_endpoints >= 2 & n_comparisons >= 2) {
 
-      mult_test_list = c("Hochberg", "Hommel")
+      mult_test_list = c("Holm", "Hochberg", "Hommel")
       gate_mult_test = as.numeric(input$gate_mult_test)
       parameters$mult_test = mult_test_list[gate_mult_test]
 
@@ -164,8 +164,6 @@ shinyServer(function(input, output, session) {
     parameters$nsims = as.numeric(input$nsims)
 
     #########################################################
-
-print(parameters)
 
     withProgress(message = "Running simulations", value = 1, {
 

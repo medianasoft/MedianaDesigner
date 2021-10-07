@@ -36,9 +36,17 @@ ADTreatSel(parameters)
     \item \code{dropout_rate}{: Numeric value defining the patient dropout rate. With normally distributed endpoints and binary endpoints, a uniform patient dropout process is assumed and thus this parameter defines the fraction of patients that will be excluded from the interim and final analyses. With time-to-event endpoints, the time to patient dropout is assumed to follow an exponential distribution and this parameter defines the annual dropout rate. This value must be between 0 and 1.}
     \item \code{enrollment_period}{: Numeric value defining the length of the patient enrollment period. This value must be positive. This parameter is required only with time-to-event endpoints.}
     \item \code{enrollment_parameter}{: Numeric value defining the median enrollment time. The patient enrollment process is assumed to be governed by a truncated exponential distribution and this parameter defines the time point by which 50\% of the patients are enrolled into the trial. This value must be between 0 and the length of the patient enrollment period. This parameter is required only with time-to-event endpoints.}.
+    \item \code{treatment_count}{: Integer value defining the number of treatments to be selected at the second interim analysis. This value must range between 1 and the total number of treatments in the trial.}
+    \item \code{mult_test}{: Character value defining the multiple testing procedure to be used in the trial. Possible values:  
+     \itemize{
+      \item \code{"Bonferroni"}: Bonferroni multiple testing procedure.
+      \item \code{"Holm"}: Holm multiple testing procedure.
+      \item \code{"Hochberg"}: Hochberg multiple testing procedure.
+    }
     \item \code{alpha}{: Numeric value defining the overall one-sided Type I error rate. The default value is 0.025.}
     \item \code{nsims}{: Integer value defining the number of simulation runs.}
     }
+  }
   }
 }
 \value{

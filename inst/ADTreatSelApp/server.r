@@ -51,6 +51,12 @@ shinyServer(function(input, output, session) {
 
     parameters$futility_threshold = as.numeric(input$futility_threshold / 100)
 
+    parameters$treatment_count = as.numeric(input$treatment_count)
+
+    mult_test_list = c("Bonferroni", "Holm", "Hochberg")
+    mult_test = as.numeric(input$mult_test)
+    parameters$mult_test = mult_test_list[mult_test]
+
     parameters$alpha = as.numeric(input$alpha)
     parameters$nsims = as.numeric(input$nsims)
 
@@ -219,7 +225,7 @@ shinyServer(function(input, output, session) {
     column_names = c("Treatment arm", "Selection probability (%)")
 
     col1 = c(trial_arms[2:narms], "No treatment")
-    col2 = round(100 * sim_summary$select, 1)
+    col2 = round(100 * c(sim_summary$select, sim_summary$overall_futility), 1)
 
     data_frame = data.frame(col1, col2)
 

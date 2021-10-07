@@ -45,8 +45,7 @@ ADRand(parameters)
 \value{
 The function returns an object of class \samp{ADRandResults}. This object is a list with the following components:
   \item{parameters}{List containing the user-specified parameters.}
-  \item{sim_results}{Data frame containing key descriptive statistics for each simulation run.}
-  \item{sim_summary}{List containing the key operating characteristics of the adaptive design.}
+  \item{sim_results}{List with multiple data frames containing key descriptive statistics for each simulation run.}
   A detailed summary of the simulation results can be created using the \code{\link{GenerateReport}} function.
 }
 \seealso{

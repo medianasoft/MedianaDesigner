@@ -1,10 +1,3 @@
-options("scipen" = 100, "digits" = 4, warn = -1)
-
-require(devEMF)
-require(officer)
-require(flextable)
-require(mvtnorm)
-
 rowMax = function(x) {
 
   row_max = rep(0, nrow(x))
@@ -384,7 +377,7 @@ ADRand = function(parameters) {
 
     withCallingHandlers({        
 
-        simulations = ADRandC(parameters)
+        sim_results = ADRandC(parameters)
 
         },
 
@@ -399,18 +392,41 @@ ADRand = function(parameters) {
 
     )
 
+    # Number of models
+    n_models = 4
+
+    # Number of stages in the trial
+    n_stages = length(parameters$stage_sample_size)
+
+    # Add column names
+    column_names = c("placebo")
+    for (i in 1:(n_doses - 1)) column_names = c(column_names, paste0("dose", i))
+    colnames(sim_results$n) = column_names
+
+    column_names = NULL
+    for (i in 1:n_models) column_names = c(column_names, paste0("model", i))
+    colnames(sim_results$traditional) = column_names
+
+    column_names = NULL
+    for (i in 1:n_models) column_names = c(column_names, paste0("model", i))
+    colnames(sim_results$adaptive) = column_names
+
+    column_names = NULL
+    for (i in 1:n_stages) column_names = c(column_names, paste0("stage", i))
+    colnames(sim_results$stage_sample_size) = column_names
+
     # Compute the critical values for the MCPMod method
     mcpmod_value = rep(0, parameters$nsims)
 
-    for (i in 1:parameters$nsims) mcpmod_value[i] = MCPModCriticalValue(parameters, simulations$n[i, ])
-    simulations$mcpmod_value = mcpmod_value
+    for (i in 1:parameters$nsims) mcpmod_value[i] = MCPModCriticalValue(parameters, sim_results$n[i, ])
+    sim_results$mcpmod_value = mcpmod_value
 
     ###########################################################
 
     # Return the results
 
     results = list(parameters = parameters,
-                   simulations = simulations)
+                   sim_results = sim_results)
 
     class(results) = "ADRandResults"
 
@@ -576,7 +592,7 @@ ADRandReportDoc = function(results) {
     #############################################################################
 
     parameters = results$parameters
-    simulations = results$simulations
+    simulations = results$sim_results
 
     dose_levels = parameters$dose_levels  
     n_doses = length(dose_levels)

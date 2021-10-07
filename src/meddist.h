@@ -17,7 +17,6 @@ double rcpp_qnorm(const double &x) {
     return vec_output[0];
 }
 
-//2021-08-30: df type was int
 double rcpp_pt(const double &x, const double &df) {
     NumericVector vec_input(1), vec_output(1);
     vec_input[0] = x;
@@ -235,6 +234,7 @@ vector<double> MVNormal(const int &m, const vector<double> &mean, const vector<d
 }
 
 vector<double> MVNormalRho(const int &m, const vector<double> &mean, const vector<double> &sd, const double &rho) {
+
     NumericMatrix corr(m, m);
 
     for(unsigned i = 0; i < m; i++){

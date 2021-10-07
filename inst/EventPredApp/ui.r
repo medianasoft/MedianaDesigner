@@ -25,7 +25,7 @@ shinyUI(
 
           fluidRow(
             box(
-              title = "Event prediction in event-driven trials",
+              title = "Blinded event prediction in event-driven trials",
               solidHeader = FALSE,
               collapsible = FALSE,
               width = 12,

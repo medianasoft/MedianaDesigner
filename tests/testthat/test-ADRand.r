@@ -64,14 +64,15 @@ context("ADRand - Success runs")
 test_that("Success run ADRand with Normal case", {  
   # Run simulations
   results = ADRand(normalCase)
+
   expect_is(results, "ADRandResults")
   expect_equal(length(results), 2)
   expect_equal(length(results$parameters), length(normalCase)+8)
-  expect_equal(length(results$simulations), 5)
+  expect_equal(length(results$sim_results), 5)
   
   # Calculate summary
   parameters = results$parameters
-  simulations = results$simulations
+  simulations = results$sim_results
 
   # - ComparisonOfTraditionalAndAdaptiveDesigns -----------------------------------------
   rowMax = function(x) {
@@ -123,7 +124,7 @@ test_that("Success run ADRand with Normal case with insignificant changes", {
   results = ADRand(changedNormalCase)
   expect_is(results, "ADRandResults")
   expect_equal(length(results), 2)
-  expect_equal(length(results$simulations), 5)
+  expect_equal(length(results$sim_results), 5)
 })
 
 test_that("Success run ADRand with Normal case with changed direction", {  
@@ -138,7 +139,7 @@ test_that("Success run ADRand with Normal case with changed direction", {
   expect_is(results, "ADRandResults")
   expect_equal(length(results), 2)
   expect_equal(length(results$parameters), length(normalCase)+8)
-  expect_equal(length(results$simulations), 5)
+  expect_equal(length(results$sim_results), 5)
 
   # TODO: Check result
 })

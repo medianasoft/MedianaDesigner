@@ -156,46 +156,13 @@ shinyServer(function(input, output, session) {
 
   })
 
-  output$Sensitivity = renderImage({
+  output$SensSpec = renderImage({
 
     results = Simulation()
 
     sim_summary = results$sim_summary
 
     sensitivity = sim_summary$sensitivity
-    cp_threshold = sim_summary$cp_threshold
-
-    width = 600
-    height = 500
-
-    filename = tempfile(fileext='.png')
-    png(file = filename, width = width, height = height, bg = "transparent")
-
-    plot(x = 100 * cp_threshold, y = 100 * sensitivity, xlab="",ylab="", xlim=c(0, 100), ylim=c(0, 100), axes=FALSE, col="red", lwd = 2, type="l")
-    box()
-    xlabels = seq(from = 0, to = 100, by = 20)
-    ylabels = seq(from = 0, to = 100, by = 20)
-    axis(1,at=xlabels, labels=xlabels, tck = 0.02, mgp = c(0, 0.4, 0))
-    axis(2,at=ylabels, labels=ylabels, tck = 0.02, mgp = c(0, 0.4, 0))
-    mtext("Futility threshold (%)", side=1, line=1.5)
-    mtext("Sensitivity rate (%)", side=2, line=1.75)
-    dev.off()
-
-    # Return a list containing the filename
-    list(src = filename,
-         contentType = 'image/png',
-         width = width,
-         height = height,
-         alt = "Sensitivity rate")
-
-  }, deleteFile = TRUE) 
-
-  output$Specificity = renderImage({
-
-    results = Simulation()
-
-    sim_summary = results$sim_summary
-
     specificity = sim_summary$specificity
     cp_threshold = sim_summary$cp_threshold
 
@@ -205,14 +172,15 @@ shinyServer(function(input, output, session) {
     filename = tempfile(fileext='.png')
     png(file = filename, width = width, height = height, bg = "transparent")
 
-    plot(x = 100 * cp_threshold, y = 100 * specificity, xlab="",ylab="", xlim=c(0, 100), ylim=c(0, 100), axes=FALSE, col="red", lwd = 2, type="l")
+    plot(x = 100 * cp_threshold, y = 100 * sensitivity, xlab="", ylab="", xlim=c(0, 100), ylim=c(0, 100), axes=FALSE, col="red", lwd = 2, type="l")
     box()
     xlabels = seq(from = 0, to = 100, by = 20)
     ylabels = seq(from = 0, to = 100, by = 20)
+    lines(x = 100 * cp_threshold, y = 100 * specificity, col="blue", lwd = 2, type="l")
     axis(1,at=xlabels, labels=xlabels, tck = 0.02, mgp = c(0, 0.4, 0))
     axis(2,at=ylabels, labels=ylabels, tck = 0.02, mgp = c(0, 0.4, 0))
     mtext("Futility threshold (%)", side=1, line=1.5)
-    mtext("Specificity rate (%)", side=2, line=1.75)
+    mtext("Sensitivity/specificity rate (%)", side=2, line=1.75)
     dev.off()
 
     # Return a list containing the filename
@@ -220,9 +188,10 @@ shinyServer(function(input, output, session) {
          contentType = 'image/png',
          width = width,
          height = height,
-         alt = "Specificity rate")
+         alt = "Sensitivity and specificity rates")
 
   }, deleteFile = TRUE) 
+
 
   output$Accuracy = renderImage({
 

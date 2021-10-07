@@ -385,6 +385,10 @@ ADSSMod = function(parameters) {
 
   sim_results = simulations$sim_results
 
+  # Add column names
+  column_names = c("futility_flag", "not_used", "increase_flag", "adapt_sign_outcome", "ia1_time", "ia2_time", "fa_time", "ia1_cp", "ia2_cp", "ia1_event_count", "ia2_event_count", "fa_event_count", "increase", "ia1_hr", "ia2_hr", "fa_hr", "stage1_pvalue", "stage2_pvalue", "trad_sign_outcome")
+  colnames(sim_results) = column_names
+
   sim_summary = list()
 
   nsims = parameters$nsims

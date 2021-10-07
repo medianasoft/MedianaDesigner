@@ -162,8 +162,9 @@ test_that("Input parameters errors check EventPred", {
     info = "Checking for missing dropout variable in dataset"
   )
 
+  # Universal parameter check func
   testParameterErrors = function(params, paramName, paramDesc, 
-    checkMissing = TRUE, checkSize = TRUE, checkMin = NA, checkMax = NA) {
+    checkMissing = TRUE, checkWrong = NA, checkSize = TRUE, checkMin = NA, checkMax = NA) {
 
     func = EventPred
 
@@ -177,6 +178,13 @@ test_that("Input parameters errors check EventPred", {
       expect_error(func(testParams), 
         info = paste0("Checking for missing ", paramDesc))
     }
+    # Wrong
+    if (!is.null(checkWrong) && !is.na(checkWrong)) {
+      testParams = params
+      testParams[paramName] <- checkWrong
+      expect_error(func(testParams), 
+        info = paste0("Checking for wrong ", paramDesc))
+    }
     # Check size
     if (checkSize) {
       testParams = params
@@ -188,14 +196,14 @@ test_that("Input parameters errors check EventPred", {
     # if (!is.null(checkMin) && !is.na(checkMin)) {
     if (!is.null(checkMin) && !anyNA(checkMin, recursive = FALSE)) {
       testParams = params
-      testParams[[paramName]][1] <- checkMin
+      testParams[[paramName]] <- checkMin
       expect_error(func(testParams), 
         info = paste0("Checking for wrong ", paramDesc, " (incorrect value < min)"))
     }
     # Check under max value
     if (!is.null(checkMax) && !is.na(checkMax)) {
       testParams = params
-      testParams[[paramName]][length(testParams[[paramName]])] <- checkMax
+      testParams[[paramName]] <- checkMax
       expect_error(func(testParams), 
         info = paste0("Checking for wrong ", paramDesc, " (incorrect value > max)"))
     }
@@ -208,10 +216,11 @@ test_that("Input parameters errors check EventPred", {
   interim_analysis_lower_min = interim_analysis - 0.01
   time_points[1] = interim_analysis_lower_min
 
-  testParameterErrors(baseCase, 
-    'time_points', 
-    'Future time points for computing event predictions',
+  testParameterErrors(baseCase,
+    "time_points",
+    "Future time points for computing event predictions",
     checkMissing = TRUE,
+    checkWrong = "Not a number",
     checkSize = FALSE,
     checkMin = time_points,
     checkMax = NA)

@@ -380,6 +380,35 @@ vector<double> FixedSeqAdj(const std::vector<double> &pvalue, const std::vector<
 }
 // End of FixedSeqAdj
 
+// Global test based on the truncated Holm procedure with equal weights
+double HolmGlobal(const std::vector<double> &pvalue, const int &n, const double &gamma) {
+
+    int m = pvalue.size(), i;
+    double globalp = 1.0;
+    vector<double> p(pvalue);
+
+    if (m > 0 && n > 0)  {
+
+        // Truncated Holm procedure with gamma>0    
+        if (gamma > 0.0) {
+
+            vector<double> modp(m);
+
+            for(i = 0; i < m; i++) {
+                modp[i] = p[i] / (gamma / (m + 0.0) + (1.0 - gamma) / (n + 0.0));    
+            }
+
+            globalp = *std::min_element(modp.begin(), modp.end());   
+            
+        }
+        
+    }
+
+    return globalp;
+
+}
+// End of HolmGlobal
+
 // Global test based on the truncated Hochberg procedure with equal weights
 double HochbergGlobal(const std::vector<double> &pvalue, const int &n, const double &gamma) {
 
@@ -392,7 +421,7 @@ double HochbergGlobal(const std::vector<double> &pvalue, const int &n, const dou
         // Truncated Hochberg procedure with gamma>0    
         if (gamma > 0.0) {
 
-            vector<double> denom(m), sortp(m);
+            vector<double> sortp(m);
 
             sort(p.begin(), p.end());
 
@@ -404,13 +433,6 @@ double HochbergGlobal(const std::vector<double> &pvalue, const int &n, const dou
             
         }
         
-        // Bonferroni test with gamma=0
-        if (gamma == 0.0) {
-
-            globalp = (n + 0.0) * (*std::min_element(p.begin(), p.end()));      // # nocov
-
-        }
-
     }
 
     return globalp;
@@ -430,7 +452,7 @@ double HommelGlobal(const std::vector<double> &pvalue, const int &n, const doubl
         // Truncated Hommel procedure with gamma>0    
         if (gamma > 0.0) {
 
-            vector<double> denom(m), sortp(m);
+            vector<double> sortp(m);
 
             sort(p.begin(), p.end());
 
@@ -442,13 +464,6 @@ double HommelGlobal(const std::vector<double> &pvalue, const int &n, const doubl
             
         }
         
-        // Bonferroni test with gamma=0
-        if (gamma == 0.0) {
-
-            globalp = (n + 0.0) * (*std::min_element(p.begin(), p.end()));      // # nocov
-
-        }
-
     }
 
     return globalp;
@@ -615,8 +630,9 @@ vector<double> MixtureProcAdjP(const int &nfam, const int &nperfam, const vector
             if (method == 1 || method == 2) {
                 if (method == 1) tot = nperfam;
                 if (method == 2) tot = (int) nrest(i,j);
-                if (proc == 1) pcomp(i,j) = HochbergGlobal(pselected, tot, gamma[j]);
-                if (proc == 2) pcomp(i,j) = HommelGlobal(pselected, tot, gamma[j]);
+                if (proc == 1) pcomp(i,j) = HolmGlobal(pselected, tot, gamma[j]);
+                if (proc == 2) pcomp(i,j) = HochbergGlobal(pselected, tot, gamma[j]);
+                if (proc == 3) pcomp(i,j) = HommelGlobal(pselected, tot, gamma[j]);
             }
 
             // Enhanced method
@@ -624,11 +640,13 @@ vector<double> MixtureProcAdjP(const int &nfam, const int &nperfam, const vector
                 // # nocov start
                 tot = (int) nrest(i,j);
                 if (last_nonempty[i] != j) {
-                    if (proc == 1) pcomp(i,j) = HochbergGlobal(pselected, tot, gamma[j]);
-                    if (proc == 2) pcomp(i,j) = HommelGlobal(pselected, tot, gamma[j]);
+                    if (proc == 1) pcomp(i,j) = HolmGlobal(pselected, tot, gamma[j]);
+                    if (proc == 2) pcomp(i,j) = HochbergGlobal(pselected, tot, gamma[j]);
+                    if (proc == 3) pcomp(i,j) = HommelGlobal(pselected, tot, gamma[j]);
                 } else {
-                    if (proc == 1) pcomp(i,j) = HochbergGlobal(pselected, tot, 1.0);
-                    if (proc == 2) pcomp(i,j) = HommelGlobal(pselected, tot, 1.0);
+                    if (proc == 1) pcomp(i,j) = HolmGlobal(pselected, tot, 1.0);
+                    if (proc == 2) pcomp(i,j) = HochbergGlobal(pselected, tot, 1.0);
+                    if (proc == 3) pcomp(i,j) = HommelGlobal(pselected, tot, 1.0);
                 }
                 // # nocov end
             }

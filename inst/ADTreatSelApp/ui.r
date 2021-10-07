@@ -32,7 +32,7 @@ shinyUI(
               collapsible = FALSE,
               width = 12,
 
-              "The web application computes key operating characteristics of an adaptive design for a multi-arm Phase III clinical trial with two interim analyses. The first interim analysis supports early stopping for futility and the second interim analysis enables adaptive treatment selection to identify the best performing treatment."
+              "The web application computes key operating characteristics of an adaptive design for a multi-arm Phase III clinical trial with two interim analyses. The first interim analysis supports early stopping for futility and the second interim analysis enables adaptive treatment selection to identify the best performing treatments."
             )
           ),
 
@@ -47,7 +47,7 @@ shinyUI(
                 collapsible = TRUE,
                 width = NULL,
                 
-                numericInput(inputId = "narms", label = "Number of trial arms", value = 3, min = 2, max = 4),
+                numericInput(inputId = "narms", label = "Number of trial arms", value = 3, min = 2, max = 5),
 
                 tags$p(class = "help-block",
                   "Total number of trial arms, including the control arm.")
@@ -135,9 +135,7 @@ shinyUI(
 
             )
 
-
           ),
-
 
           fluidRow(
 
@@ -235,8 +233,16 @@ shinyUI(
                   tags$p(class = "help-block",
                      "Fraction of the total number of events at Interim analysis 2.")
 
-                )
+                ),
 
+                numericInput(inputId = "treatment_count", label = "Number of selected treatments", value = 1, min = 1, max = 5),
+
+                tags$p(class = "help-block",
+                     "Number of best performing treatments to be selected at Interim analysis 2."),
+
+                selectInput("mult_test", label = "Multiple testing procedure", c("Bonferroni" = 1, "Holm" = 2, "Hochberg" = 3))
+
+ 
               )
 
             )
@@ -420,7 +426,7 @@ shinyUI(
                 tableOutput("TreatmentSelection"),
 
                 tags$p(class = "help-block",
-                  "Probability that each treatment is selected at the best performing treatment for the final analysis. No treatment is selected if the trial is terminated at Interim analysis 1.")
+                  "Probability that each treatment is selected for the final analysis. No treatment is selected if the trial is terminated at Interim analysis 1.")
 
               )
             ),

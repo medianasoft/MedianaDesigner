@@ -280,7 +280,7 @@ EventPredReportDoc = function(results) {
 
   #############################################################################
 
-  report_title = "Event prediction in event-driven trials"
+  report_title = "Blinded event prediction in event-driven trials"
 
   item_list[[item_index]] = list(type = "paragraph", label = "Description", value = "The simulation report presents a summary of event predictions for Phase II or Phase III trials with an event-driven design. Blinded event data at an interim analysis are used to forecast the number of events at pre-defined time points in the future.")
   item_index = item_index + 1

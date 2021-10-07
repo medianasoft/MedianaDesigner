@@ -40,6 +40,31 @@ ADTreatSel = function(parameters) {
 
   narms = length(sample_size)
 
+  if (is.null(parameters$treatment_count)) stop("Number of treatments selected at Interim analysis 2 (treatment_count): Value must be specified.", call. = FALSE)
+
+  treatment_count = ContinuousErrorCheck(parameters$treatment_count, 
+                                     1, 
+                                     lower_values = 1,
+                                     lower_values_sign = ">=",
+                                     upper_values = narms - 1,
+                                     upper_values_sign = "<=",
+                                     "Number of treatments selected at Interim analysis 2 (treatment_count)",
+                                     NA,
+                                     "int",
+                                     NA) 
+
+  mult_test_list = c("Bonferroni", "Holm", "Hochberg")
+
+  if (is.null(parameters$mult_test)) stop("Multiple testing procedure (mult_test): Value must be specified.", call. = FALSE)
+
+  if (!tolower(parameters$mult_test) %in% tolower(mult_test_list)) stop("Multiple testing procedure (mult_test): Value must be Bonferroni, Holm or Hochberg.", call. = FALSE)
+
+  for (i in 1:length(mult_test_list)) {
+      if (tolower(mult_test_list[i]) == tolower(parameters$mult_test)) mult_test_index = i
+  }   
+
+  parameters$mult_test_index = mult_test_index
+
   if (is.null(parameters$info_frac)) stop("Information fractions at IA1, IA2, FA (info_frac): Value must be specified.", call. = FALSE)
 
   info_frac = ContinuousErrorCheck(parameters$info_frac, 
@@ -311,6 +336,9 @@ ADTreatSel = function(parameters) {
   parameters$event_count_fa = 0
   parameters$max_sample_size = max(parameters$sample_size)
 
+  parameters$weight = rep(1 / (narms - 1), narms - 1)
+  parameters$transition = 0
+
   # All means and SDs
   if (endpoint_index == 1) {
     parameters$means = c(parameters$control_mean, parameters$treatment_mean)
@@ -352,20 +380,32 @@ ADTreatSel = function(parameters) {
 
   sim_results = simulations$sim_results
 
+  # Add column names
+  column_names = c("adapt_sign_outcome")
+  for (i in 1:(narms - 1)) column_names = c(column_names, paste0("trad_sign_outcome_dose", i))
+  for (i in 1:(narms - 1)) column_names = c(column_names, paste0("futility_flag_dose", i))
+  for (i in 1:(narms - 1)) column_names = c(column_names, paste0("selection_flag_dose", i))
+  colnames(sim_results) = column_names
+
   sim_summary = list()
 
-  nsims = parameters$nsims
-
   ad_outcome = sim_results[, 1]
-  select_flag = sim_results[, 2]
-  trad_outcome = sim_results[, 2 + (1:(narms - 1))]
-  futility = sim_results[, 2 + narms - 1 + (1:(narms - 1))]
+  trad_outcome = sim_results[, 1 + (1:(narms - 1))]
+  futility = sim_results[, narms + (1:(narms - 1))]
+  select = sim_results[, 2 * narms - 1 + (1:(narms - 1))]
 
+  # Overall power of the adaptive design
   sim_summary$ad_power = mean(ad_outcome)
-  select = rep(narms)
-  for (i in 1:(narms - 1)) select[i] = mean(select_flag == i - 1)
-  select[narms] = mean(select_flag == -1)  
+
+  # Overall power of the traditional design
+  if (is.matrix(trad_outcome)) sim_summary$trad_power = colMeans(trad_outcome) else sim_summary$trad_power = mean(trad_outcome)
+
+  # select = rep(narms)
+  # for (i in 1:(narms - 1)) select[i] = mean(select_flag == i - 1)
+  # select[narms] = mean(select_flag == -1)  
   sim_summary$select = select
+
+  # Probability of dropping each treatment for futility at Interim analysis 1
   if (is.matrix(futility)) {
     sim_summary$futility = colMeans(futility) 
     sim_summary$overall_futility = mean(rowSums(futility) == narms - 1)
@@ -373,7 +413,13 @@ ADTreatSel = function(parameters) {
     sim_summary$futility = mean(futility)
     sim_summary$overall_futility = mean(futility)
   }
-  if (is.matrix(trad_outcome)) sim_summary$trad_power = colMeans(trad_outcome) else sim_summary$trad_power = mean(trad_outcome)
+
+  # Probability of selecting each treatment for the final assessment at Interim analysis 2
+  if (is.matrix(select)) {
+    sim_summary$select = colMeans(select) 
+  } else {
+    sim_summary$select = mean(select)
+  }
 
   results = list(parameters = parameters,
                  sim_results = sim_results,
@@ -393,10 +439,6 @@ ADTreatSelReportDoc = function(results) {
    # Error checks
 
    if (class(results) != "ADTreatSelResults") stop("The object was not created by the ADTreatSel function", call. = FALSE)
-
-  #############################################################################
-
-  statistics = c("Lower quartile", "Median", "Mean", "Upper quartile")
 
   #############################################################################
 
@@ -443,7 +485,7 @@ ADTreatSelReportDoc = function(results) {
 
   report_title = "Adaptive design with data-driven treatment arm selection"
 
-  item_list[[item_index]] = list(type = "paragraph", label = "Description", value = "The simulation report presents key operating characteristics of an adaptive design for a multi-arm Phase III clinical trial with two interim analyses. The first interim analysis supports early stopping for futility and the second interim analysis enables adaptive treatment selection to identify the best performing treatment.")
+  item_list[[item_index]] = list(type = "paragraph", label = "Description", value = "The simulation report presents key operating characteristics of an adaptive design for a multi-arm Phase III clinical trial with two interim analyses. The first interim analysis supports early stopping for futility and the second interim analysis enables adaptive treatment selection to identify the best performing treatments.")
 
   item_index = item_index + 1
 
@@ -572,6 +614,21 @@ ADTreatSelReportDoc = function(results) {
 
   column_names = c("Parameter", "Value")
 
+  col1 = c("Number of selected treatments", "Multiple testing procedure")
+  col2 = c(parameters$treatment_count, parameters$mult_test)
+  
+  data_frame = data.frame(col1, col2)
+  title = paste0("Table ", table_index, ". Decision rule at Interim analysis 2")
+
+  column_width = c(5, 1.5)
+  item_list[[item_index]] = CreateTable(data_frame, column_names, column_width, title, FALSE)
+  item_index = item_index + 1
+  table_index = table_index + 1
+
+  #############################################################################
+
+  column_names = c("Parameter", "Value")
+
   if (endpoint_index %in% c(1, 2)) {
     col1 = c("Dropout rate at the end of the treatment period (%)")
     col2 = c(100 * parameters$dropout_rate)
@@ -628,12 +685,12 @@ ADTreatSelReportDoc = function(results) {
   column_names = c("Treatment arm", "Selection probability (%)")
 
   col1 = c(trial_arms[2:narms], "No treatment")
-  col2 = round(100 * sim_summary$select, 1)
+  col2 = round(100 * c(sim_summary$select, sim_summary$overall_futility), 1)
 
   data_frame = data.frame(col1, col2)
   title = paste0("Table ", table_index, ". Simulation results: Treatment selection at Interim analysis 2")
 
-  footnote = "Probability that each treatment is selected at the best performing treatment for the final analysis. No treatment is selected if the trial is terminated at Interim analysis 1."  
+  footnote = "Probability that each treatment is selected for the final analysis. No treatment is selected if the trial is terminated for futility at Interim analysis 1."  
 
   column_width = c(2.5, 4)
 

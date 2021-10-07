@@ -284,9 +284,9 @@ MultAdj = function(parameters) {
 
     n_hypotheses = n_comparisons * n_endpoints
 
-    mult_test_list = c("Hochberg", "Hommel")
+    mult_test_list = c("Holm", "Hochberg", "Hommel")
 
-    if (!tolower(parameters$mult_test) %in% tolower(mult_test_list)) stop("Multiple testing procedure (mult_test): Value must be Hochberg or Hommel.", call. = FALSE)
+    if (!tolower(parameters$mult_test) %in% tolower(mult_test_list)) stop("Multiple testing procedure (mult_test): Value must be Holm, Hochberg or Hommel.", call. = FALSE)
 
     for (i in 1:length(mult_test_list)) {
         if (tolower(mult_test_list[i]) == tolower(parameters$mult_test)) mult_test_index = i
@@ -428,7 +428,7 @@ MultAdj = function(parameters) {
         ContinuousErrorCheck(as.vector(parameters$mult_test_gamma), 
                              n_endpoints, 
                              lower_values = c(0),
-                             lower_values_sign = c(">="),
+                             lower_values_sign = c(">"),
                              upper_values = c(1),
                              upper_values_sign = c("<="),
                              "Truncation parameters (mult_test_gamma)",
@@ -525,6 +525,12 @@ MultAdj = function(parameters) {
 
     sim_results = simulations$sim_results
 
+    # Add column names
+    column_names = NULL
+    for (i in 1:n_comparisons) column_names = c(column_names, paste0("pvalue", i))
+    for (i in 1:n_comparisons) column_names = c(column_names, paste0("adjpvalue", i))
+    colnames(sim_results) = column_names
+
     sim_summary = list()
 
     # Unadjusted power
@@ -554,6 +560,12 @@ MultAdj = function(parameters) {
     simulations = MultAdjC2(parameters)
 
     sim_results = simulations$sim_results
+
+    # Add column names
+    column_names = NULL
+    for (i in 1:n_endpoints) column_names = c(column_names, paste0("pvalue", i))
+    for (i in 1:n_endpoints) column_names = c(column_names, paste0("adjpvalue", i))
+    colnames(sim_results) = column_names
 
     sim_summary = list()
 
@@ -596,6 +608,12 @@ MultAdj = function(parameters) {
     simulations = MultAdjC3(parameters)
 
     sim_results = simulations$sim_results
+
+    # Add column names
+    column_names = NULL
+    for (i in 1:n_hypotheses) column_names = c(column_names, paste0("pvalue", i))
+    for (i in 1:n_hypotheses) column_names = c(column_names, paste0("adjpvalue", i))
+    colnames(sim_results) = column_names
 
     sim_summary = list()
 
@@ -717,7 +735,7 @@ MultAdjReportDoc = function(results) {
 
   #############################################################################
 
-  report_title = "Traditional design with multiple outcomes"
+  report_title = "Traditional design with multiple objectives"
 
   endpoint_labels = c("normally distributed", "binary")
 

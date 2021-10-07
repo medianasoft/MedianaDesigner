@@ -1321,6 +1321,11 @@ List ADTreatSelC(const List &parameters_arg) {
     int event_count_ia2 = as<int>(parameters["event_count_ia2"]);
     int event_count_fa = as<int>(parameters["event_count_fa"]);
 
+    int treatment_count = as<int>(parameters["treatment_count"]);
+    int mult_test_index = as<int>(parameters["mult_test_index"]);
+    vector<double> weight = as<vector<double>>(parameters["weight"]);
+    vector<double> transition = as<vector<double>>(parameters["transition"]);
+
     vector<double> dropout_parameter = as<vector<double>>(parameters["dropout_parameter"]);
 
     int endpoint_index = as<int>(parameters["endpoint_index"]);
@@ -1342,9 +1347,11 @@ List ADTreatSelC(const List &parameters_arg) {
 
     /*******************************************************************/
 
-    double pvalue, ad_outcome, max_cp;
+    double cp_threshold, ad_outcome;
 
-    int i, j, sim, current_stratum, ntotal, narms = sample_size.size(), select_flag;
+    int i, j, sim, current_stratum, ntotal, narms = sample_size.size();
+
+    vector<double> adj_pvalue, select_flag(narms - 1), futility_flag(narms - 1);
 
     ntotal = SumVecInt(sample_size);
 
@@ -1354,11 +1361,11 @@ List ADTreatSelC(const List &parameters_arg) {
 
     TestResult test_result;
 
-    vector<double> look_time(3), event_count(3), dropout, hr(narms), cp1(narms - 1), cp2(narms - 1), overall_control_sample, control_sample, treatment_sample, temp_vec, pvalue_trad(narms - 1), trad_outcome(narms - 1);
+    vector<double> look_time(3), event_count(3), dropout, hr(narms), cp1(narms - 1), cp2(narms - 1), sortedcp2(narms - 1), pvalue(narms - 1), overall_control_sample, control_sample, treatment_sample, temp_vec, pvalue_trad(narms - 1), trad_outcome(narms - 1);
 
-    vector<int> stratum_list, sample_list, futility_flag(narms - 1);
+    vector<int> stratum_list, sample_list;
 
-    NumericMatrix sim_results(nsims, 10 + narms), overall_treatment_sample(narms - 1, max_sample_size); 
+    NumericMatrix sim_results(nsims, 3 * narms - 2), overall_treatment_sample(narms - 1, max_sample_size); 
 
     /*******************************************************************/
 
@@ -1367,16 +1374,14 @@ List ADTreatSelC(const List &parameters_arg) {
         hr = fillvec(narms, 0.0);
         cp1 = fillvec(narms - 1, 0.0);
         cp2 = fillvec(narms - 1, 0.0);
+        pvalue = fillvec(narms - 1, 1.0);
         trad_outcome = fillvec(narms - 1, 0.0);
+        select_flag = fillvec(narms - 1, 0.0);
+        futility_flag = fillvec(narms - 1, 0.0);
 
         look_time = fillvec(3, 0.0);
         event_count = fillvec(3, 0.0);
         pvalue_trad = fillvec(narms - 1, 0.0);
-
-        pvalue = 0.0;
-
-        select_flag = -1;
-        max_cp = 0.0;
 
         ad_outcome = 0.0;
 
@@ -1432,29 +1437,52 @@ List ADTreatSelC(const List &parameters_arg) {
                 // Conditional power
                 cp2[i] = CondPower(test_result.test_stat, sample_size_ia2[0] + sample_size_ia2[i + 1], sample_size_fa[0] + sample_size_fa[i + 1], 1, 1, 0.0, alpha);
 
-                // Treatment selection rule
-                if (futility_flag[i] < 1.0 && cp2[i] > max_cp) {
-                    max_cp = cp2[i];
-                    select_flag = i;    
+            }
+
+            for (i = 0; i < narms - 1; i++) sortedcp2[i] = cp2[i];
+
+            // Treatment selection rule
+            sort(sortedcp2.begin(), sortedcp2.end());
+
+            cp_threshold = sortedcp2[narms - treatment_count - 1];
+
+            for (i = 0; i < narms - 1; i++) {
+
+                if (futility_flag[i] < 1.0 && cp2[i] >= cp_threshold) {
+                    select_flag[i] = 1.0;    
                 }
 
             }
 
             // Final analysis
 
-            if (select_flag > -1) {
+            for (i = 0; i < narms - 1; i++) {
 
                 control_sample = ExtractSamples(overall_control_sample, 0, sample_size_fa[0]);
 
-                treatment_sample.clear();
-                for (j = 0; j < sample_size_fa[select_flag + 1]; j++) treatment_sample.push_back(overall_treatment_sample(select_flag, j));
+                if (select_flag[i] > 0.0) {
 
-                if (endpoint_index == 1) test_result = TTest(control_sample, treatment_sample, 0.0, direction_index);
-                if (endpoint_index == 2) test_result = PropTest(control_sample, treatment_sample, 0.0, direction_index);
+                    treatment_sample.clear();
+                    for (j = 0; j < sample_size_fa[i + 1]; j++) treatment_sample.push_back(overall_treatment_sample(i, j));
 
-                ad_outcome = (test_result.pvalue <= alpha / (narms - 1.0));        
+                    if (endpoint_index == 1) test_result = TTest(control_sample, treatment_sample, 0.0, direction_index);
+                    if (endpoint_index == 2) test_result = PropTest(control_sample, treatment_sample, 0.0, direction_index);
+
+                    pvalue[i] = test_result.pvalue;
+                
+                } 
 
             }
+
+            // Apply the multiplicity adjustment
+
+            adj_pvalue = TradMultAdj(mult_test_index, pvalue, weight, transition);
+
+           for (i = 0; i < narms - 1; i++) {
+
+              if (adj_pvalue[i] < alpha) ad_outcome = 1.0;         
+
+           }
 
             // Traditional analysis
 
@@ -1473,8 +1501,6 @@ List ADTreatSelC(const List &parameters_arg) {
                 trad_outcome[i] = (pvalue_trad[i] <= alpha && futility_flag[i] < 1.0);        
 
             }
-
-
 
         }
         // Normal and binary endpoints
@@ -1541,7 +1567,7 @@ List ADTreatSelC(const List &parameters_arg) {
 
             }
 
-            // Interim analysis 1
+            // Interim analysis 2
 
             stratum_list.clear();
             for (i = 0; i < narms; i++) stratum_list.push_back(i);        
@@ -1563,10 +1589,21 @@ List ADTreatSelC(const List &parameters_arg) {
                 // Conditional power
                 cp2[i] = CondPower(test_result.test_stat, event_count_ia2, event_count_fa, 1, 1, 0.0, alpha);
 
-                // Treatment selection rule
-                if (futility_flag[i] < 1.0 && cp2[i] > max_cp) {
-                    max_cp = cp2[i];
-                    select_flag = i;    
+            }
+
+            // Treatment selection rule
+
+            for (i = 0; i < narms - 1; i++) sortedcp2[i] = cp2[i];
+
+            // Treatment selection rule
+            sort(sortedcp2.begin(), sortedcp2.end());
+
+            cp_threshold = sortedcp2[narms - treatment_count - 1];
+
+            for (i = 0; i < narms - 1; i++) {
+
+                if (futility_flag[i] < 1.0 && cp2[i] >= cp_threshold) {
+                    select_flag[i] = 1.0;    
                 }
 
             }
@@ -1577,23 +1614,36 @@ List ADTreatSelC(const List &parameters_arg) {
             for (i = 0; i < narms; i++) stratum_list.push_back(i);        
             look_time[2] = FindMilestone(stratum_list, survival_data.stratum, survival_data.os_local_start, event_count_fa);
 
-            if (select_flag > -1) {
+            for (i = 0; i < narms - 1; i++) {
 
                 // Control
                 stratum_list.clear();
                 stratum_list.push_back(0);
                 outcome_censor_control = ExtractOutcomeCensor(stratum_list, survival_data.stratum, survival_data.start, survival_data.os_local, survival_data.os_local_censor, look_time[2]);
 
-                // Treatment
-                stratum_list.clear();
-                stratum_list.push_back(select_flag + 1);
-                outcome_censor_treatment = ExtractOutcomeCensor(stratum_list, survival_data.stratum, survival_data.start, survival_data.os_local, survival_data.os_local_censor, look_time[2]);
-    
-                test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, direction_index);
+                if (select_flag[i] > 0.0) {
 
-                ad_outcome = (test_result.pvalue <= alpha / (narms - 1.0));        
+                    // Treatment
+                    stratum_list.clear();
+                    stratum_list.push_back(i + 1);
+                    outcome_censor_treatment = ExtractOutcomeCensor(stratum_list, survival_data.stratum, survival_data.start, survival_data.os_local, survival_data.os_local_censor, look_time[2]);
+        
+                    test_result = LogrankTest(outcome_censor_control, outcome_censor_treatment, 1.0, direction_index);
 
+                    pvalue[i] = test_result.pvalue;
+
+                }
             }
+
+            // Apply the multiplicity adjustment
+
+            adj_pvalue = TradMultAdj(mult_test_index, pvalue, weight, transition);
+
+           for (i = 0; i < narms - 1; i++) {
+
+              if (adj_pvalue[i] < alpha) ad_outcome = 1.0;         
+
+           }
 
             // Traditional analysis
 
@@ -1623,9 +1673,9 @@ List ADTreatSelC(const List &parameters_arg) {
         // Summary statistics for each simulation run
 
         sim_results(sim, 0) = ad_outcome;
-        sim_results(sim, 1) = select_flag;
-        for (i = 0; i < narms - 1; i++) sim_results(sim, 2 + i) = trad_outcome[i];
-        for (i = 0; i < narms - 1; i++) sim_results(sim, 2 + narms - 1 + i) = futility_flag[i];
+        for (i = 0; i < narms - 1; i++) sim_results(sim, 1 + i) = trad_outcome[i];
+        for (i = 0; i < narms - 1; i++) sim_results(sim, 1 + narms - 1 + i) = futility_flag[i];
+        for (i = 0; i < narms - 1; i++) sim_results(sim, 1 + 2 * narms - 2 + i) = select_flag[i];
 
     }
     // End of simulations
@@ -1692,7 +1742,7 @@ List ADPopSelC(const List &parameters_arg) {
 
     vector<int> stratum_list, sample_list;
 
-    NumericMatrix sim_results(nsims, 19); 
+    NumericMatrix sim_results(nsims, 15); 
 
     /*******************************************************************/
 
@@ -2103,9 +2153,6 @@ List ADPopSelC(const List &parameters_arg) {
         sim_results(sim, 12) = look_time[1];
         sim_results(sim, 13) = look_time[2];
         sim_results(sim, 14) = look_time[3];
-
-        sim_results(sim, 15) = event_count[1];
-        sim_results(sim, 16) = event_count[2];
 
     }
     // End of simulations

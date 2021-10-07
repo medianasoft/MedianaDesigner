@@ -16,9 +16,9 @@ This package supports efficient simulation-based power and sample size calculati
 * Adaptive trials with data-driven treatment selection (ADTreatSel function).
 * Adaptive trials with data-driven population selection (ADPopSel function).
 * Optimal selection of a futility stopping rule (FutRule function).
-* Event prediction in event-driven trials (EventPred function).
+* Blinded event prediction in event-driven trials (EventPred function).
 * Adaptive trials with response-adaptive randomization (ADRand function) [experimental module].
-* Traditional trials with multiple objectives (experimental module).
+* Traditional trials with multiple objectives (MultAdj function) [experimental module].
 
 For more information on this package, visit [Mediana's web site](http://www.mediana.us/free-software). The latest stable version of the package can be downloaded from [CRAN](https://cran.r-project.org/web/packages/MedianaDesigner/index.html). 
 
@@ -28,7 +28,7 @@ The technical manuals with a detailed description of the statistical methodology
 * [Adaptive trials with data-driven treatment selection](http://www.mediana.us/MedianaDesigner/ADTreatSel.pdf).
 * [Adaptive trials with data-driven population selection](http://www.mediana.us/MedianaDesigner/ADPopSel.pdf).
 * [Optimal selection of a futility stopping rule](http://www.mediana.us/MedianaDesigner/FutRule.pdf).
-* [Event prediction in event-driven trials](http://www.mediana.us/MedianaDesigner/EventPred.pdf).
+* [Blinded event prediction in event-driven trials](http://www.mediana.us/MedianaDesigner/EventPred.pdf).
 * [Adaptive trials with response-adaptive randomization](http://www.mediana.us/MedianaDesigner/ADRand.pdf).
 * [Traditional trials with multiple objectives](http://www.mediana.us/MedianaDesigner/MultAdj.pdf).
 
@@ -57,6 +57,8 @@ Key functions included in the package:
 ## Feedback
 
 Please let us know if you have questions about the R package or underlying methodology. You can contact us at info at mediana.us.  In addition, you could submit questions, issues or feature requests on the [issues page](https://github.com/medianasoft/MedianaDesigner/issues).
+
+We would like to thank multiple individuals, including Thomas Brechenmacher (IQVIA), Douglas McNair (Gates Foundation) and Thomas Peppard (Certara), for their feedback that helped us improve the package and add new features.
 
 ## References
 

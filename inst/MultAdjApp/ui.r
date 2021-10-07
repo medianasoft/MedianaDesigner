@@ -1,6 +1,6 @@
 library(shiny)
 suppressPackageStartupMessages(library(shinydashboard))
-library(MultAdj)
+library(MedianaDesigner)
 library(shinyMatrix)
 
 shinyUI(
@@ -395,7 +395,7 @@ shinyUI(
                       collapsible = TRUE,
                       width = NULL,
 
-                      selectInput("gate_mult_test", label = "Component of gatekeeping procedure", c("Hochberg" = 1, "Hommel" = 2)),
+                      selectInput("gate_mult_test", label = "Component of gatekeeping procedure", c("Holm" = 1, "Hochberg" = 2, "Hommel" = 3)),
 
                       selectInput("mult_method", label = "Mixture method used in the gatekeeping procedure", c("Standard" = 1, "Modified" = 2, "Enhanced" = 3))
 

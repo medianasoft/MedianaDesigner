@@ -12,7 +12,7 @@ The MedianaDesigner package provides efficient simulation-based power and sample
 \item Adaptive trials with data-driven treatment selection.
 \item Adaptive trials with data-driven population selection.
 \item Optimal selection of a futility stopping rule.
-\item Event prediction in event-driven trials.
+\item Blinded event prediction in event-driven trials.
 \item Adaptive trials with response-adaptive randomization (experimental module).
 \item Traditional trials with multiple objectives (experimental module).
 }
@@ -22,8 +22,8 @@ For more information on this package, visit \url{https://mediana.us/free-softwar
 \tabular{ll}{
 Package: \tab MedianaDesigner\cr
 Type: \tab Package\cr
-Version: \tab 0.3\cr
-Date: \tab 2021-09-20\cr
+Version: \tab 0.4\cr
+Date: \tab 2021-10-15\cr
 License: \tab GPL-3
 }
 Key functions included in the package:
@@ -36,7 +36,7 @@ Key functions included in the package:
 \item \code{\link{ADPopSelApp}}: Graphical user interface for designing adaptive trials with data-driven population selection.
 \item \code{\link{FutRule}}: Simulation-based selection of an optimal futility stopping rule at an interim analysis.
 \item \code{\link{FutRuleApp}}: Graphical user interface for an optimal selection of a futility stopping rule.
-\item \code{\link{EventPred}}: Simulation-based event prediction in trials with an event-driven design.
+\item \code{\link{EventPred}}: Blinded simulation-based event prediction in trials with an event-driven design.
 \item \code{\link{EventPredPriorDistribution}}: Calculation of the parameters of prior gamma distributions.
 \item \code{\link{EventPredApp}}: Graphical user interface for event prediction.
 \item \code{\link{ADRand}}: Simulation-based design of adaptive trials with response-adaptive randomization.
@@ -72,7 +72,7 @@ Multiple case studies are included in this vignette to illustrate the use of thi
 
 }
 \author{
-Mediana (www.mediana.us)
+Mediana (www.mediana.us). We would like to thank multiple individuals, including Thomas Brechenmacher (IQVIA), Douglas McNair (Gates Foundation) and Thomas Peppard (Certara), for their feedback that helped us improve the package and add new features.
 }
 \references{
 Alosh, M., Bretz, F., Huque, M. (2014). Advanced multiplicity adjustment methods in clinical trials. \emph{Statistics in Medicine}. 33, 693-713.

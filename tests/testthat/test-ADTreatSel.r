@@ -30,6 +30,12 @@ normalCase = list(
   # Futility threshold for conditional power at IA1
   futility_threshold = 0.1,
 
+  # Number of selected treatments
+  treatment_count = 1,
+
+  # Multiple testing procedure (Bonferroni, Holm or Hochberg)
+  mult_test = "Bonferroni",
+
   # Dropout rate at the end of the treatment period
   dropout_rate = 0.05,
 
@@ -67,6 +73,12 @@ binaryCase = list(
 
   # Futility threshold for conditional power at IA1
   futility_threshold = 0.15,
+
+  # Number of selected treatments
+  treatment_count = 1,
+
+  # Multiple testing procedure (Bonferroni, Holm or Hochberg)
+  mult_test = "Bonferroni",
 
   # One-sided alpha level
   alpha = 0.025,
@@ -106,6 +118,12 @@ timeToEventCase = list(
   # Futility threshold for conditional power at IA1
   futility_threshold = 0.1,
 
+  # Number of selected treatments
+  treatment_count = 1,
+
+  # Multiple testing procedure (Bonferroni, Holm or Hochberg)
+  mult_test = "Bonferroni",
+
   # Enrollment period
   enrollment_period = 24,
 
@@ -135,6 +153,8 @@ test_that("Success run ADTreatSel with Normal case", {
       treatment_sd = normalCase$treatment_sd,
       info_frac = normalCase$info_frac,
       futility_threshold = normalCase$futility_threshold,
+      treatment_count = normalCase$treatment_count,
+      mult_test = normalCase$mult_test,
       # use default
       #dropout_rate = normalCase$dropout_rate,
       alpha = normalCase$alpha #,
@@ -144,17 +164,16 @@ test_that("Success run ADTreatSel with Normal case", {
   )
   expect_is(results, "ADTreatSelResults")
   expect_type(  results$sim_results, "double")
-  expect_length(results$sim_results, 13000)
+  expect_length(results$sim_results, 7000)
   
   expect_type(    results$sim_summary, "list")
   expect_true(abs(results$sim_summary$ad_power - 0.5) < 0.3)
   expect_true(abs(results$sim_summary$overall_futility - 0.1) < 0.1)
   
   expect_is(      results$sim_summary$select, "numeric")
-  expect_length(  results$sim_summary$select, 3)
+  expect_length(  results$sim_summary$select, 2)
   expect_true(abs(results$sim_summary$select[1] - 0.4) < 0.1)
   expect_true(abs(results$sim_summary$select[2] - 0.4) < 0.1)
-  expect_true(abs(results$sim_summary$select[3] - 0.1) < 0.1)
 
   expect_is(      results$sim_summary$futility, "numeric")
   expect_length(  results$sim_summary$futility, 2)
@@ -182,6 +201,8 @@ test_that("Success run ADTreatSel with Binary case", {
       treatment_rate = binaryCase$treatment_rate,
       info_frac = binaryCase$info_frac,
       futility_threshold = binaryCase$futility_threshold,
+      treatment_count = binaryCase$treatment_count,
+      mult_test = binaryCase$mult_test,
       # use default
       #alpha = binaryCase$alpha,
       nsims = binaryCase$nsims
@@ -189,19 +210,18 @@ test_that("Success run ADTreatSel with Binary case", {
   )
   expect_is(results, "ADTreatSelResults")
   expect_type(  results$sim_results, "double")
-  expect_length(results$sim_results, 14000)
+  expect_length(results$sim_results, 10000)
   
   expect_type(    results$sim_summary, "list")
   expect_true(abs(results$sim_summary$ad_power - 0.8) < 0.2)
   expect_true(abs(results$sim_summary$overall_futility - 0.1) < 0.1)
   
   expect_is(      results$sim_summary$select, "numeric")
-  expect_length(  results$sim_summary$select, 4)
+  expect_length(  results$sim_summary$select, 3)
   expect_true(abs(results$sim_summary$select[1] - 0.35) < 0.1)
   expect_true(abs(results$sim_summary$select[2] - 0.33) < 0.1)
   expect_true(abs(results$sim_summary$select[3] - 0.31) < 0.1)
-  expect_true(abs(results$sim_summary$select[4] - 0.1) < 0.1)
-
+  
   expect_is(      results$sim_summary$futility, "numeric")
   expect_length(  results$sim_summary$futility, 3)
   expect_true(abs(results$sim_summary$futility[1] - 0.1) < 0.1)
@@ -224,17 +244,16 @@ test_that("Success run ADTreatSel with Time-to-event case", {
   results = ADTreatSel(timeToEventCase)
   expect_is(results, "ADTreatSelResults")
   expect_type(  results$sim_results, "double")
-  expect_length(results$sim_results, 13000)
+  expect_length(results$sim_results, 7000)
   
   expect_type(    results$sim_summary, "list")
   expect_true(abs(results$sim_summary$ad_power - 0.8) < 0.2)
   expect_true(abs(results$sim_summary$overall_futility - 0.1) < 0.1)
   
   expect_is(      results$sim_summary$select, "numeric")
-  expect_length(  results$sim_summary$select, 3)
+  expect_length(  results$sim_summary$select, 2)
   expect_true(abs(results$sim_summary$select[1] - 0.49) < 0.1)
   expect_true(abs(results$sim_summary$select[2] - 0.47) < 0.1)
-  expect_true(abs(results$sim_summary$select[3] - 0.1) < 0.1)
 
   expect_is(      results$sim_summary$futility, "numeric")
   expect_length(  results$sim_summary$futility, 2)
@@ -264,6 +283,8 @@ test_that("Success run ADTreatSel with Normal case and short sample_size vector"
       treatment_sd = c(1),     # treatment_sd = c(1, 1),
       info_frac = normalCase$info_frac,
       futility_threshold = normalCase$futility_threshold,
+      treatment_count = normalCase$treatment_count,
+      mult_test = normalCase$mult_test,
       dropout_rate = normalCase$dropout_rate,
       alpha = normalCase$alpha,
       nsims = normalCase$nsims
@@ -272,16 +293,15 @@ test_that("Success run ADTreatSel with Normal case and short sample_size vector"
 
   expect_is(results, "ADTreatSelResults")
   expect_type(  results$sim_results, "double")
-  expect_length(results$sim_results, 12000)
+  expect_length(results$sim_results, 4000)
   
   expect_type(    results$sim_summary, "list")
   expect_true(abs(results$sim_summary$ad_power - 0.5) < 0.3)
   expect_true(abs(results$sim_summary$overall_futility - 0.2) < 0.1)
   
   expect_is(      results$sim_summary$select, "numeric")
-  expect_length(  results$sim_summary$select, 2)
+  expect_length(  results$sim_summary$select, 1)
   expect_true(abs(results$sim_summary$select[1] - 0.7) < 0.2)
-  expect_true(abs(results$sim_summary$select[2] - 0.2) < 0.1)
 
   expect_is(      results$sim_summary$futility, "numeric")
   expect_length(  results$sim_summary$futility, 1)
@@ -311,6 +331,8 @@ test_that("Success run ADTreatSel with Lower direction", {
       treatment_sd = normalCase$treatment_sd,
       info_frac = normalCase$info_frac,
       futility_threshold = normalCase$futility_threshold,
+      treatment_count = normalCase$treatment_count,
+      mult_test = normalCase$mult_test,
       dropout_rate = normalCase$dropout_rate,
       alpha = normalCase$alpha,
       nsims = normalCase$nsims
@@ -319,7 +341,7 @@ test_that("Success run ADTreatSel with Lower direction", {
 
   expect_is(results, "ADTreatSelResults")
   expect_type(  results$sim_results, "double")
-  expect_length(results$sim_results, 13000)
+  expect_length(results$sim_results, 7000)
   
   expect_type(    results$sim_summary, "list")
   expect_is(      results$sim_summary$select, "numeric")
@@ -355,6 +377,8 @@ test_that("Input parameters errors check ADTreatSel", {
         treatment_sd = normalCase$treatment_sd,
         info_frac = normalCase$info_frac,
         futility_threshold = normalCase$futility_threshold,
+        treatment_count = normalCase$treatment_count,
+        mult_test = normalCase$mult_test,
         dropout_rate = normalCase$dropout_rate,
         alpha = normalCase$alpha,
         nsims = normalCase$nsims
@@ -377,6 +401,8 @@ test_that("Input parameters errors check ADTreatSel", {
         info_frac = normalCase$info_frac,
         futility_threshold = normalCase$futility_threshold,
         dropout_rate = normalCase$dropout_rate,
+        treatment_count = normalCase$treatment_count,
+        mult_test = normalCase$mult_test,
         alpha = normalCase$alpha,
         nsims = normalCase$nsims
       )
@@ -398,6 +424,8 @@ test_that("Input parameters errors check ADTreatSel", {
         treatment_sd = normalCase$treatment_sd,
         info_frac = normalCase$info_frac,
         futility_threshold = normalCase$futility_threshold,
+        treatment_count = normalCase$treatment_count,
+        mult_test = normalCase$mult_test,
         dropout_rate = normalCase$dropout_rate,
         alpha = normalCase$alpha,
         nsims = normalCase$nsims
@@ -419,6 +447,8 @@ test_that("Input parameters errors check ADTreatSel", {
         # missing
         #info_frac = normalCase$info_frac,
         futility_threshold = normalCase$futility_threshold,
+        treatment_count = normalCase$treatment_count,
+        mult_test = normalCase$mult_test,
         dropout_rate = normalCase$dropout_rate,
         alpha = normalCase$alpha,
         nsims = normalCase$nsims
@@ -440,6 +470,8 @@ test_that("Input parameters errors check ADTreatSel", {
         # wrong (IA1 >= IA2)
         info_frac = c(0.8, 0.6, 1.0),  # normalCase$info_frac == c(0.4, 0.6, 1.0),
         futility_threshold = normalCase$futility_threshold,
+        treatment_count = normalCase$treatment_count,
+        mult_test = normalCase$mult_test,
         dropout_rate = normalCase$dropout_rate,
         alpha = normalCase$alpha,
         nsims = normalCase$nsims
@@ -461,6 +493,8 @@ test_that("Input parameters errors check ADTreatSel", {
         # wrong (IA2 >= FA)
         info_frac = c(0.4, 1.0, 0.9),  # normalCase$info_frac == c(0.4, 0.6, 1.0),
         futility_threshold = normalCase$futility_threshold,
+        treatment_count = normalCase$treatment_count,
+        mult_test = normalCase$mult_test,
         dropout_rate = normalCase$dropout_rate,
         alpha = normalCase$alpha,
         nsims = normalCase$nsims
@@ -482,6 +516,8 @@ test_that("Input parameters errors check ADTreatSel", {
         # wrong (FA != 1)
         info_frac = c(0.4, 0.6, 0.9),  # normalCase$info_frac == c(0.4, 0.6, 1.0),
         futility_threshold = normalCase$futility_threshold,
+        treatment_count = normalCase$treatment_count,
+        mult_test = normalCase$mult_test,
         dropout_rate = normalCase$dropout_rate,
         alpha = normalCase$alpha,
         nsims = normalCase$nsims
@@ -503,6 +539,8 @@ test_that("Input parameters errors check ADTreatSel", {
         # wrong
         info_frac = c(0.4, 0.6), # c(0.4, 0.6, 1.0) = normalCase$info_frac,
         futility_threshold = normalCase$futility_threshold,
+        treatment_count = normalCase$treatment_count,
+        mult_test = normalCase$mult_test,
         dropout_rate = normalCase$dropout_rate,
         alpha = normalCase$alpha,
         nsims = normalCase$nsims
@@ -524,6 +562,8 @@ test_that("Input parameters errors check ADTreatSel", {
         # wrong
         info_frac = c(0, 0.6, 1.0), # c(0.4, 0.6, 1.0) = normalCase$info_frac,
         futility_threshold = normalCase$futility_threshold,
+        treatment_count = normalCase$treatment_count,
+        mult_test = normalCase$mult_test,
         dropout_rate = normalCase$dropout_rate,
         alpha = normalCase$alpha,
         nsims = normalCase$nsims
@@ -545,6 +585,8 @@ test_that("Input parameters errors check ADTreatSel", {
         # wrong
         info_frac = c(0.4, 0.6, 1.1), # c(0.4, 0.6, 1.0) = normalCase$info_frac,
         futility_threshold = normalCase$futility_threshold,
+        treatment_count = normalCase$treatment_count,
+        mult_test = normalCase$mult_test,
         dropout_rate = normalCase$dropout_rate,
         alpha = normalCase$alpha,
         nsims = normalCase$nsims
@@ -566,6 +608,8 @@ test_that("Input parameters errors check ADTreatSel", {
         # wrong
         info_frac = c(0.4, 0.6, "1.0"), # c(0.4, 0.6, 1.0) = normalCase$info_frac,
         futility_threshold = normalCase$futility_threshold,
+        treatment_count = normalCase$treatment_count,
+        mult_test = normalCase$mult_test,
         dropout_rate = normalCase$dropout_rate,
         alpha = normalCase$alpha,
         nsims = normalCase$nsims
@@ -574,8 +618,9 @@ test_that("Input parameters errors check ADTreatSel", {
     info = "Checking for wrong information fractions at IA1, IA2, FA (value not a number)"
   )
 
+  # Universal parameter check func
   testParameterErrors = function(params, paramName, paramDesc, 
-    checkMissing = TRUE, checkSize = TRUE, checkMin = NA, checkMax = NA) {
+    checkMissing = TRUE, checkWrong = NA, checkSize = TRUE, checkMin = NA, checkMax = NA) {
 
     func = ADTreatSel
 
@@ -588,6 +633,13 @@ test_that("Input parameters errors check ADTreatSel", {
       testParams[paramName] <- NULL
       expect_error(func(testParams), 
         info = paste0("Checking for missing ", paramDesc))
+    }
+    # Wrong
+    if (!is.null(checkWrong) && !is.na(checkWrong)) {
+      testParams = params
+      testParams[paramName] <- checkWrong
+      expect_error(func(testParams), 
+        info = paste0("Checking for wrong ", paramDesc))
     }
     # Check size
     if (checkSize) {
@@ -682,6 +734,24 @@ test_that("Input parameters errors check ADTreatSel", {
     checkMissing = TRUE,
     checkSize = TRUE,
     checkMin = 0,
+    checkMax = NA)
+
+  testParameterErrors(normalCase, 
+    'treatment_count', 
+    'Number of selected treatments',
+    checkMissing = TRUE,
+    checkWrong = "Not a number",
+    checkSize = FALSE,
+    checkMin = 0,
+    checkMax = length(normalCase$sample_size))
+
+  testParameterErrors(normalCase, 
+    'mult_test', 
+    'Multiple testing procedure',
+    checkMissing = TRUE,
+    checkWrong = "Wrong value",
+    checkSize = FALSE,
+    checkMin = NA,
     checkMax = NA)
 
   testParameterErrors(binaryCase, 

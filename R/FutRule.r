@@ -396,6 +396,13 @@ FutRuleReportDoc = function(results) {
 
   #############################################################################
 
+  report_title = "Optimal futility stopping rule"
+
+  item_list[[item_index]] = list(type = "paragraph", label = "Description", value = "The simulation report presents operating characteristics of a multi-arm trial design with a single interim analysis. A futility stopping rule will be applied at this interim look and the trial will be stopped early for futility if the predicted probability of success (conditional power) is less than a pre-defined futility threshold in all treatment arms. An optimal value of the futility threshold is computed by maximizing the sensitivity and specificity rates.")
+  item_index = item_index + 1
+
+  #############################################################################
+
   column_names = c("Parameter", "Value")
 
   if (parameters$direction_index == 1) label = "A higher value of the endpoint indicates a more favorable outcome"
@@ -438,13 +445,6 @@ FutRuleReportDoc = function(results) {
   if (endpoint_index == 3) {
     times = c(parameters$control_time, parameters$treatment_time)
   }
-
-  #############################################################################
-
-  report_title = "Optimal futility stopping rule"
-
-  item_list[[item_index]] = list(type = "paragraph", label = "Description", value = "The simulation report presents operating characteristics of a multi-arm trial design with a single interim analysis. A futility stopping rule will be applied at this interim look and the trial will be stopped early for futility if the predicted probability of success (conditional power) is less than a pre-defined futility threshold in all treatment arms. An optimal value of the futility threshold is computed by maximizing the sensitivity and specificity rates.")
-  item_index = item_index + 1
 
   #############################################################################
 
@@ -561,50 +561,23 @@ FutRuleReportDoc = function(results) {
 
   #############################################################################
 
-  filename = "sensitivity.emf"
+  filename = "sensspec.emf"
 
   emf(file = filename, width = width, height = height, pointsize = pointsize)
   plot(x = 100 * cp_threshold, y = 100 * sensitivity, xlab="",ylab="", xlim=c(0, 100), ylim=c(0, 100), axes=FALSE, col="red", lwd = 2, type="l")
   # 1=bottom, 2=left, 3=top, 4=right
+  lines(x = 100 * cp_threshold, y = 100 * specificity, col="blue", lwd = 2, type="l")
   labels = seq(from = 0, to = 100, by = 20)
   axis(1,at=labels, labels=labels, tck = 0.02, mgp = c(0, 0.4, 0))
   axis(2,at=labels, labels=labels, tck = 0.02, mgp = c(0, 0.4, 0))
   mtext("Futility threshold (%)", side=1, line=1.5)
-  mtext("Sensitivity rate (%)", side=2, line=1.75)
+  mtext("Sensitivity/specificity rate (%)", side=2, line=1.75)
   box()
   dev.off()
 
-  footnote = "The sensitivity rate is defined as the probability of correctly retaining at least one treatment arm at the interim analysis. This probability is evaluated under the alternative hypothesis of beneficial effect, i.e., all treatments are effective. The sensitivity rate decreases with the futility threshold."
+  footnote = "Red curve: Sensitivity rate (probability of correctly retaining at least one treatment arm at the interim analysis, evaluated under the alternative hypothesis of beneficial effect, i.e., all treatments are effective). Blue curve: Specificity rate (probability of correctly stopping all treatment arms at the interim analysis due to futility, evaluated under the null hypothesis of no effect, i.e., all treatments are ineffective)."
 
-  item_list[[item_index]] =  list(label = paste0("Figure ", figure_index, ". Sensitivity rate as a function of the futility threshold"), 
-                             filename = filename,
-                             dim = c(width, height),
-                             type = "emf_plot",
-                             page_break = TRUE,
-                             footnote = footnote)
-
-  item_index = item_index + 1
-  figure_index = figure_index + 1
-
-  #############################################################################
-
-  filename = "specificity.emf"
-
-  emf(file = filename, width = width, height = height)
-  plot(x = 100 * cp_threshold, y = 100 * specificity, xlab="",ylab="", xlim=c(0, 100), ylim=c(0, 100), axes=FALSE, col="red", lwd = 2, type="l")
-  box()
-  # 1=bottom, 2=left, 3=top, 4=right
-  labels = seq(from = 0, to = 100, by = 20)
-  axis(1,at=labels, labels=labels, tck = 0.02, mgp = c(0, 0.4, 0))
-  axis(2,at=labels, labels=labels, tck = 0.02, mgp = c(0, 0.4, 0))
-  mtext("Futility threshold (%)", side=1, line=1.5)
-  mtext("Specificity rate (%)", side=2, line=1.75)
-  box()
-  dev.off()
-
-  footnote = "The specificity rate is defined as the probability of correctly stopping all treatment arms at the interim analysis due to futility. This probability is evaluated under the null hypothesis of no effect, i.e., all treatments are ineffective. The specificity rate increases with the futility threshold."
-
-  item_list[[item_index]] =  list(label = paste0("Figure ", figure_index, ". Specificity rate as a function of the futility threshold"), 
+  item_list[[item_index]] =  list(label = paste0("Figure ", figure_index, ". Sensitivity and specificity rates as functions of the futility threshold"), 
                              filename = filename,
                              dim = c(width, height),
                              type = "emf_plot",

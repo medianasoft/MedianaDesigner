@@ -172,7 +172,7 @@ test_that("Success run ADPopSel with Normal case", {
   expect_is(results, "ADPopSelResults")
 
   expect_type(  results$sim_results, "double")
-  expect_length(results$sim_results, 19000)
+  expect_length(results$sim_results, 15000)
   
   expect_type(    results$sim_summary, "list")
   expect_true(abs(results$sim_summary$futility - 0.2) < 0.2)
@@ -269,7 +269,7 @@ test_that("Success run ADPopSel with Binary case", {
   expect_is(results, "ADPopSelResults")
 
   expect_type(  results$sim_results, "double")
-  expect_length(results$sim_results, 19000)
+  expect_length(results$sim_results, 15000)
   
   expect_type(    results$sim_summary, "list")
   expect_true(abs(results$sim_summary$futility - 0.2) < 0.2)
@@ -325,7 +325,7 @@ test_that("Success run ADPopSel with Time-to-event case", {
   expect_is(results, "ADPopSelResults")
 
   expect_type(  results$sim_results, "double")
-  expect_length(results$sim_results, 19000)
+  expect_length(results$sim_results, 15000)
   
   expect_type(    results$sim_summary, "list")
   expect_true(abs(results$sim_summary$futility - 0.2) < 0.2)
