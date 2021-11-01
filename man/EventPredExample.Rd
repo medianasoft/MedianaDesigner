@@ -48,6 +48,9 @@ parameters$enrollment_prior_distribution =
 # Number of simulations, you should prefer more
 parameters$nsims = 100
 
+# Remove this parameter in your code:
+parameters$withoutCharts = TRUE
+
 # Forecast the number of events at the pre-defined time points
 results = EventPred(parameters)
 

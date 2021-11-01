@@ -61,6 +61,7 @@ MultAdj(parameters)
     \item \code{mult_test_gamma}{: Numeric vector defining the truncation parameter for each endpoint-specific family of hypotheses. The vector's length must be equal to the number of endpoints. Each element must be between 0 and 1, the last element may be equal to 1 whereas the other elements must be strictly less than 1. This parameter is required only with gatekeeping procedures.}
     \item \code{dropout_rate}{: Numeric value defining the patient dropout rate. A uniform patient dropout process is assumed and thus this parameter defines the fraction of patients that will be excluded from the analysis. This value must be between 0 and 1.}
     \item{alpha}{: Numeric value defining the overall one-sided Type I error rate. The default value is 0.025.}
+    \item \code{random_seed}{: Integer value defining the random number generator seed. The default value is 49283.}
     \item \code{nsims}{: Integer value defining the number of simulation runs.}
     }
   }

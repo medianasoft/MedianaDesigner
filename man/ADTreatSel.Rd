@@ -44,6 +44,7 @@ ADTreatSel(parameters)
       \item \code{"Hochberg"}: Hochberg multiple testing procedure.
     }
     \item \code{alpha}{: Numeric value defining the overall one-sided Type I error rate. The default value is 0.025.}
+    \item \code{random_seed}{: Integer value defining the random number generator seed. The default value is 49283.}
     \item \code{nsims}{: Integer value defining the number of simulation runs.}
     }
   }

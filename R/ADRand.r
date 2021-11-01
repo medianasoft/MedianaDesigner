@@ -51,6 +51,29 @@ ADRand = function(parameters) {
 
     if (typeof(parameters) != "list") stop("Function parameters must be a list of named values.", call. = FALSE)
     
+    if (is.null(parameters$random_seed)) {
+      
+      random_seed = 49283
+
+    } else {
+
+      random_seed = ContinuousErrorCheck(parameters$random_seed, 
+                                   1, 
+                                   lower_values = 1,
+                                   lower_values_sign = c(">="),
+                                   upper_values = 100000,
+                                   upper_values_sign = c("<="),
+                                   "Seed for the random number generator (random_seed)",
+                                   c("Value"),
+                                   "int",
+                                   NA) 
+
+    }
+
+    parameters$random_seed = random_seed
+
+    set.seed(random_seed)
+        
     if (is.null(parameters$endpoint_type)) stop("Endpoint type (endpoint_type): Value must be specified.", call. = FALSE)
 
     if (!tolower(parameters$endpoint_type) %in% c("normal")) stop("Endpoint type (endpoint_type): Value must be Normal.", call. = FALSE)
@@ -764,56 +787,60 @@ ADRandReportDoc = function(results) {
 
     #############################################################################
 
-    # Plot candidate dose-response models
+    if (is.null(parameters$withoutCharts)) {   # skip chart generation on tests
 
-    width = 6.5
-    height = 5
-    filename = "models.emf"
+      # Plot candidate dose-response models
 
-    # Linear model
-    coef1 = ComputeDRFunctionParameters(1, 0, 1, max(dose_levels), NA)
+      width = 6.5
+      height = 5
+      filename = "models.emf"
 
-    # Exponential model
-    coef2 = ComputeDRFunctionParameters(2, 0, 1, max(dose_levels), parameters$exponential_model_parameter)
+      # Linear model
+      coef1 = ComputeDRFunctionParameters(1, 0, 1, max(dose_levels), NA)
 
-    # Emax model
-    coef3 = ComputeDRFunctionParameters(3, 0, 1, max(dose_levels), parameters$
-      emax_model_parameter)
+      # Exponential model
+      coef2 = ComputeDRFunctionParameters(2, 0, 1, max(dose_levels), parameters$exponential_model_parameter)
 
-    # Logistic model
-    coef4 = ComputeDRFunctionParameters(4, 0, 1, max(dose_levels), parameters$logistic_model_parameters)
+      # Emax model
+      coef3 = ComputeDRFunctionParameters(3, 0, 1, max(dose_levels), parameters$
+        emax_model_parameter)
 
-    x = seq(from = 0, to = max(dose_levels), length = 100)
-    y1 = numeric(length(x))
-    y2 = numeric(length(x))
-    y3 = numeric(length(x))
-    y4 = numeric(length(x))
+      # Logistic model
+      coef4 = ComputeDRFunctionParameters(4, 0, 1, max(dose_levels), parameters$logistic_model_parameters)
 
-    for (i in 1:length(x)) {
+      x = seq(from = 0, to = max(dose_levels), length = 100)
+      y1 = numeric(length(x))
+      y2 = numeric(length(x))
+      y3 = numeric(length(x))
+      y4 = numeric(length(x))
 
-      y1[i] = DRFunction(1, coef1, x[i])
-      y2[i] = DRFunction(2, coef2, x[i])
-      y3[i] = DRFunction(3, coef3, x[i])
-      y4[i] = DRFunction(4, coef4, x[i])
+      for (i in 1:length(x)) {
+
+        y1[i] = DRFunction(1, coef1, x[i])
+        y2[i] = DRFunction(2, coef2, x[i])
+        y3[i] = DRFunction(3, coef3, x[i])
+        y4[i] = DRFunction(4, coef4, x[i])
+
+      }
+   
+      emf(file = filename, width = width, height = height)
+      plot(x = x, y = y1, xlab="Dose", ylab="Response", xlim = c(0, max(dose_levels)), ylim = c(0, 1), type="l", lwd = 2, col = "black") 
+      lines(x = x, y = y2, col = "blue", lwd = 2)
+      lines(x = x, y = y3, col = "red", lwd = 2)
+      lines(x = x, y = y4, col = "darkgreen", lwd = 2)
+      dev.off() 
+
+      item_list[[item_index]] =  list(label = paste0("Figure ", figure_index, ". Candidate dose-response models used in the MCPMod method."), 
+                              filename = filename,
+                              dim = c(width, height),
+                              type = "emf_plot",
+                              footnote = "Black curve: Linear model, Blue curve: Exponential model, Red curve: Emax model, Green curve: Logistic model.",
+                              page_break = TRUE)
+
+      item_index = item_index + 1
+      figure_index = figure_index + 1
 
     }
-
-    emf(file = filename, width = width, height = height)
-    plot(x = x, y = y1, xlab="Dose", ylab="Response", xlim = c(0, max(dose_levels)), ylim = c(0, 1), type="l", lwd = 2, col = "black") 
-    lines(x = x, y = y2, col = "blue", lwd = 2)
-    lines(x = x, y = y3, col = "red", lwd = 2)
-    lines(x = x, y = y4, col = "darkgreen", lwd = 2)
-    dev.off() 
-
-    item_list[[item_index]] =  list(label = paste0("Figure ", figure_index, ". Candidate dose-response models used in the MCPMod method."), 
-                             filename = filename,
-                             dim = c(width, height),
-                             type = "emf_plot",
-                             footnote = "Black curve: Linear model, Blue curve: Exponential model, Red curve: Emax model, Green curve: Logistic model.",
-                             page_break = TRUE)
-
-    item_index = item_index + 1
-    figure_index = figure_index + 1
 
     #############################################################################
 

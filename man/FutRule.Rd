@@ -36,6 +36,7 @@ FutRule(parameters)
     \item \code{enrollment_period}{: Numeric value defining the length of the patient enrollment period. This value must be positive. This parameter is required only with time-to-event endpoints.}
     \item \code{enrollment_parameter}{: Numeric value defining the median enrollment time. The patient enrollment process is assumed to be governed by a truncated exponential distribution and this parameter defines the time point by which 50\% of the patients are enrolled into the trial. This value must be between 0 and the length of the patient enrollment period. This parameter is required only with time-to-event endpoints.}.
     \item \code{alpha}{: Numeric value defining the overall one-sided Type I error rate. The default value is 0.025.}
+    \item \code{random_seed}{: Integer value defining the random number generator seed. The default value is 49283.}
     \item \code{nsims}{: Integer value defining the number of simulation runs.}
     }
   }

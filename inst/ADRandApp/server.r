@@ -220,7 +220,7 @@ shinyServer(function(input, output, session) {
     results = Simulation()
 
     parameters = results$parameters
-    simulations = results$simulations
+    simulations = results$sim_results
 
     column_names = c("Stage", "Statistic", "Sample size")
 
@@ -251,7 +251,7 @@ shinyServer(function(input, output, session) {
     results = Simulation()
 
     parameters = results$parameters
-    simulations = results$simulations
+    simulations = results$sim_results
 
     column_names = c("Dose", "Statistic", "Sample size")
 
@@ -288,7 +288,7 @@ shinyServer(function(input, output, session) {
     results = Simulation()
 
     parameters = results$parameters
-    simulations = results$simulations
+    simulations = results$sim_results
 
     rowMax = function(x) {
       row_max = rep(0, nrow(x))

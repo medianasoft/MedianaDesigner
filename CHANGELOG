@@ -19,8 +19,12 @@ Fixed minor bugs and added the following module:
 Fixed minor bugs and added the following module:
 - Experimental module for designing traditional trials with multiple objectives (MultAdj function)
 
-2021-10-07 Version 0.4
+2021-10-10 Version 0.4-0.5
 Added the following features:
 - Updated the summary of sensitivity and specificity curves in the simulation report (FutRule function).
 - Added more flexible treatment selection rules and multiplicity adjustments (ADTreatSel function).
 - Added Holm-based gatekeeping procedures (MultAdj function).
+
+2021-10-25 Version 0.6
+Added the following feature:
+- Explicit specification of the random seed for pseudorandom number generation.

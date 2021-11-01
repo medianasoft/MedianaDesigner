@@ -4,6 +4,29 @@ FutRule = function(parameters) {
 
   if (typeof(parameters) != "list") stop("Function parameters must be a list of named values.", call. = FALSE)
 
+  if (is.null(parameters$random_seed)) {
+    
+    random_seed = 49283
+
+  } else {
+
+    random_seed = ContinuousErrorCheck(parameters$random_seed, 
+                                 1, 
+                                 lower_values = 1,
+                                 lower_values_sign = c(">="),
+                                 upper_values = 100000,
+                                 upper_values_sign = c("<="),
+                                 "Seed for the random number generator (random_seed)",
+                                 c("Value"),
+                                 "int",
+                                 NA) 
+
+  }
+
+  parameters$random_seed = random_seed
+
+  set.seed(random_seed)
+
   if (is.null(parameters$endpoint_type)) stop("Endpoint type (endpoint_type): Value must be specified.", call. = FALSE)
 
   if (!tolower(parameters$endpoint_type) %in% tolower(endpoint_list)) stop("Endpoint type (endpoint_type): Value must be Normal, Binary or Time-to-event.", call. = FALSE)
@@ -561,69 +584,77 @@ FutRuleReportDoc = function(results) {
 
   #############################################################################
 
-  filename = "sensspec.emf"
+  if (is.null(parameters$withoutCharts)) {   # skip chart generation on tests
 
-  emf(file = filename, width = width, height = height, pointsize = pointsize)
-  plot(x = 100 * cp_threshold, y = 100 * sensitivity, xlab="",ylab="", xlim=c(0, 100), ylim=c(0, 100), axes=FALSE, col="red", lwd = 2, type="l")
-  # 1=bottom, 2=left, 3=top, 4=right
-  lines(x = 100 * cp_threshold, y = 100 * specificity, col="blue", lwd = 2, type="l")
-  labels = seq(from = 0, to = 100, by = 20)
-  axis(1,at=labels, labels=labels, tck = 0.02, mgp = c(0, 0.4, 0))
-  axis(2,at=labels, labels=labels, tck = 0.02, mgp = c(0, 0.4, 0))
-  mtext("Futility threshold (%)", side=1, line=1.5)
-  mtext("Sensitivity/specificity rate (%)", side=2, line=1.75)
-  box()
-  dev.off()
+    filename = "sensspec.emf"
 
-  footnote = "Red curve: Sensitivity rate (probability of correctly retaining at least one treatment arm at the interim analysis, evaluated under the alternative hypothesis of beneficial effect, i.e., all treatments are effective). Blue curve: Specificity rate (probability of correctly stopping all treatment arms at the interim analysis due to futility, evaluated under the null hypothesis of no effect, i.e., all treatments are ineffective)."
+    emf(file = filename, width = width, height = height, pointsize = pointsize)
+    plot(x = 100 * cp_threshold, y = 100 * sensitivity, xlab="",ylab="", xlim=c(0, 100), ylim=c(0, 100), axes=FALSE, col="red", lwd = 2, type="l")
+    # 1=bottom, 2=left, 3=top, 4=right
+    lines(x = 100 * cp_threshold, y = 100 * specificity, col="blue", lwd = 2, type="l")
+    labels = seq(from = 0, to = 100, by = 20)
+    axis(1,at=labels, labels=labels, tck = 0.02, mgp = c(0, 0.4, 0))
+    axis(2,at=labels, labels=labels, tck = 0.02, mgp = c(0, 0.4, 0))
+    mtext("Futility threshold (%)", side=1, line=1.5)
+    mtext("Sensitivity/specificity rate (%)", side=2, line=1.75)
+    box()
+    dev.off()
 
-  item_list[[item_index]] =  list(label = paste0("Figure ", figure_index, ". Sensitivity and specificity rates as functions of the futility threshold"), 
-                             filename = filename,
-                             dim = c(width, height),
-                             type = "emf_plot",
-                             page_break = TRUE,
-                             footnote = footnote)
+    footnote = "Red curve: Sensitivity rate (probability of correctly retaining at least one treatment arm at the interim analysis, evaluated under the alternative hypothesis of beneficial effect, i.e., all treatments are effective). Blue curve: Specificity rate (probability of correctly stopping all treatment arms at the interim analysis due to futility, evaluated under the null hypothesis of no effect, i.e., all treatments are ineffective)."
 
-  item_index = item_index + 1
-  figure_index = figure_index + 1
+    item_list[[item_index]] =  list(label = paste0("Figure ", figure_index, ". Sensitivity and specificity rates as functions of the futility threshold"), 
+                              filename = filename,
+                              dim = c(width, height),
+                              type = "emf_plot",
+                              page_break = TRUE,
+                              footnote = footnote)
+
+    item_index = item_index + 1
+    figure_index = figure_index + 1
+
+  }
 
   #############################################################################
 
-  filename = "accuracy.emf"
+  if (is.null(parameters$withoutCharts)) {   # skip chart generation on tests
 
-  index = which.max(accuracy)
-  optimal_point = round(100 * cp_threshold[index], 1)
-  level = 0.95 * max(accuracy)
-  zone = cp_threshold[accuracy >= level]
-  optimal_lower = round(100 * min(zone), 1)
-  optimal_upper = round(100 * max(zone), 1)
+    filename = "accuracy.emf"
 
-  emf(file = filename, width = width, height = height)
-  plot(x = 100 * cp_threshold, y = 100 * accuracy, xlab="",ylab="", xlim=c(0, 100), ylim=c(50, 100), axes=FALSE, col="red", lwd = 2, type="l")
-  box()
-  # 1=bottom, 2=left, 3=top, 4=right
-  xlabels = seq(from = 0, to = 100, by = 20)
-  ylabels = seq(from = 50, to = 100, by = 10)
-  axis(1,at=xlabels, labels=xlabels, tck = 0.02, mgp = c(0, 0.4, 0))
-  axis(2,at=ylabels, labels=ylabels, tck = 0.02, mgp = c(0, 0.4, 0))
-  abline(v = optimal_point, lty = "solid")
-  abline(v = c(optimal_lower, optimal_upper), lty = "dashed")
-  mtext("Futility threshold (%)", side=1, line=1.5)
-  mtext("Accuracy rate (%)", side=2, line=1.75)
-  box()
-  dev.off()
+    index = which.max(accuracy)
+    optimal_point = round(100 * cp_threshold[index], 1)
+    level = 0.95 * max(accuracy)
+    zone = cp_threshold[accuracy >= level]
+    optimal_lower = round(100 * min(zone), 1)
+    optimal_upper = round(100 * max(zone), 1)
 
-  footnote = paste0("The accuracy rate is defined as the average of the sensitivity and specificity rates and an optimal futility threshold is defined as the threshold that maximizes the accuracy rate. Optimal futility threshold: ", optimal_point, "%. 95% optimal interval: (", optimal_lower, "%, ", optimal_upper, "%).")
+    emf(file = filename, width = width, height = height)
+    plot(x = 100 * cp_threshold, y = 100 * accuracy, xlab="",ylab="", xlim=c(0, 100), ylim=c(50, 100), axes=FALSE, col="red", lwd = 2, type="l")
+    box()
+    # 1=bottom, 2=left, 3=top, 4=right
+    xlabels = seq(from = 0, to = 100, by = 20)
+    ylabels = seq(from = 50, to = 100, by = 10)
+    axis(1,at=xlabels, labels=xlabels, tck = 0.02, mgp = c(0, 0.4, 0))
+    axis(2,at=ylabels, labels=ylabels, tck = 0.02, mgp = c(0, 0.4, 0))
+    abline(v = optimal_point, lty = "solid")
+    abline(v = c(optimal_lower, optimal_upper), lty = "dashed")
+    mtext("Futility threshold (%)", side=1, line=1.5)
+    mtext("Accuracy rate (%)", side=2, line=1.75)
+    box()
+    dev.off()
 
-  item_list[[item_index]] =  list(label = paste0("Figure ", figure_index, ". Accuracy rate as a function of the futility threshold"), 
-                             filename = filename,
-                             dim = c(width, height),
-                             type = "emf_plot",
-                             page_break = FALSE,
-                             footnote = footnote)
+    footnote = paste0("The accuracy rate is defined as the average of the sensitivity and specificity rates and an optimal futility threshold is defined as the threshold that maximizes the accuracy rate. Optimal futility threshold: ", optimal_point, "%. 95% optimal interval: (", optimal_lower, "%, ", optimal_upper, "%).")
 
-  item_index = item_index + 1
-  figure_index = figure_index + 1
+    item_list[[item_index]] =  list(label = paste0("Figure ", figure_index, ". Accuracy rate as a function of the futility threshold"), 
+                              filename = filename,
+                              dim = c(width, height),
+                              type = "emf_plot",
+                              page_break = FALSE,
+                              footnote = footnote)
+
+    item_index = item_index + 1
+    figure_index = figure_index + 1
+
+  }
 
   #############################################################################
 

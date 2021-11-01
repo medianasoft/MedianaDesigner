@@ -109,8 +109,18 @@ context("FutRule - Success runs")
 
 test_that("Success run FutRule with Normal case", {
 
+  # Set the seed of R‘s random number generator.
+  # It also takes effect to Rcpp randome generation functions.
+  # https://stackoverflow.com/questions/60119621/get-the-same-sample-of-integers-from-rcpp-as-base-r
+  suppressWarnings(RNGkind(sample.kind = "Rounding"))
+  set.seed(5)
+
+  parameters = normalCase
+  # Skip chart generation in tests
+  parameters$withoutCharts = TRUE
+
   # Success run
-  results = FutRule(normalCase)
+  results = FutRule(parameters)
   expect_is(results, "FutRuleResults")
   expect_named(results, c("parameters", "sim_summary"))
 
@@ -142,10 +152,14 @@ test_that("Success run FutRule with Normal case", {
   GenerateReport(results, tempfile(fileext = ".docx"))
 })
 
-test_that("Success run ModuleD with Binary case", {
+test_that("Success run FutRule with Binary case", {
+
+  parameters = binaryCase
+  # Skip chart generation in tests
+  parameters$withoutCharts = TRUE
 
   # Success run 
-  results = FutRule(binaryCase)
+  results = FutRule(parameters)
 
   expect_is(results, "FutRuleResults")
   expect_named(results, c("parameters", "sim_summary"))
@@ -180,8 +194,12 @@ test_that("Success run ModuleD with Binary case", {
 
 test_that("Success run FutRule with Time-to-event case", {
 
+  parameters = timeToEventCase
+  # Skip chart generation in tests
+  parameters$withoutCharts = TRUE
+
   # Success run 
-  results = FutRule(timeToEventCase)
+  results = FutRule(parameters)
 
   expect_is(results, "FutRuleResults")
   expect_named(results, c("parameters", "sim_summary"))
@@ -272,9 +290,10 @@ test_that("Success run FutRule with Lower direction", {
       control_sd = normalCase$control_sd,
       treatment_mean = normalCase$treatment_mean,
       treatment_sd = normalCase$treatment_sd,
-      info_frac = normalCase$info_frac #,
+      info_frac = normalCase$info_frac,
       # alpha = normalCase$alpha,
       # nsims = normalCase$nsims
+      withoutCharts = TRUE
     )
   )
   expect_is(results, "FutRuleResults")

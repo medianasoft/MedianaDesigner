@@ -4,6 +4,29 @@ ADPopSel = function(parameters) {
 
   if (typeof(parameters) != "list") stop("Function parameters must be a list of named values.", call. = FALSE)
 
+  if (is.null(parameters$random_seed)) {
+    
+    random_seed = 49283
+
+  } else {
+
+    random_seed = ContinuousErrorCheck(parameters$random_seed, 
+                                 1, 
+                                 lower_values = 1,
+                                 lower_values_sign = c(">="),
+                                 upper_values = 100000,
+                                 upper_values_sign = c("<="),
+                                 "Seed for the random number generator (random_seed)",
+                                 c("Value"),
+                                 "int",
+                                 NA) 
+
+  }
+
+  parameters$random_seed = random_seed
+
+  set.seed(random_seed)
+  
   if (is.null(parameters$endpoint_type)) stop("Endpoint type (endpoint_type): Value must be specified.", call. = FALSE)
 
   if (!tolower(parameters$endpoint_type) %in% tolower(endpoint_list)) stop("Endpoint type (endpoint_type): Value must be Normal, Binary or Time-to-event.", call. = FALSE)

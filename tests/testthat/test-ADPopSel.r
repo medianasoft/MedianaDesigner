@@ -147,6 +147,12 @@ context("ADPopSel - Success runs")
 
 test_that("Success run ADPopSel with Normal case", {
 
+  # Set the seed of R‘s random number generator.
+  # It also takes effect to Rcpp randome generation functions.
+  # https://stackoverflow.com/questions/60119621/get-the-same-sample-of-integers-from-rcpp-as-base-r
+  suppressWarnings(RNGkind(sample.kind = "Rounding"))
+  set.seed(5)
+
   # Success run
   results = ADPopSel(
     list(
@@ -179,20 +185,20 @@ test_that("Success run ADPopSel with Normal case", {
   
   expect_is(      results$sim_summary$trad_power, "numeric")
   expect_length(  results$sim_summary$trad_power, 2)
-  expect_true(abs(results$sim_summary$trad_power[1] - 0.5) < 0.1)
-  expect_true(abs(results$sim_summary$trad_power[2] - 0.4) < 0.1)
+  expect_true(abs(results$sim_summary$trad_power[1] - 0.52) < 0.1)
+  expect_true(abs(results$sim_summary$trad_power[2] - 0.43) < 0.1)
 
   expect_is(      results$sim_summary$ad_power, "numeric")
   expect_length(  results$sim_summary$ad_power, 3)
-  expect_true(abs(results$sim_summary$ad_power[1] - 0.4) < 0.2)
-  expect_true(abs(results$sim_summary$ad_power[2] - 0.3) < 0.1)
-  expect_true(abs(results$sim_summary$ad_power[3] - 0.5) < 0.1)
+  expect_true(abs(results$sim_summary$ad_power[1] - 0.45) < 0.1)
+  expect_true(abs(results$sim_summary$ad_power[2] - 0.32) < 0.1)
+  expect_true(abs(results$sim_summary$ad_power[3] - 0.46) < 0.1)
 
   expect_is(      results$sim_summary$hypothesis_selection, "numeric")
   expect_length(  results$sim_summary$hypothesis_selection, 3)
-  expect_true(abs(results$sim_summary$hypothesis_selection[1] - 0.3) < 0.1)
-  expect_true(abs(results$sim_summary$hypothesis_selection[2] - 0.3) < 0.1)
-  expect_true(abs(results$sim_summary$hypothesis_selection[3] - 0.3) < 0.1)
+  expect_true(abs(results$sim_summary$hypothesis_selection[1] - 0.31) < 0.1)
+  expect_true(abs(results$sim_summary$hypothesis_selection[2] - 0.32) < 0.1)
+  expect_true(abs(results$sim_summary$hypothesis_selection[3] - 0.35) < 0.1)
 
   expect_is(      results$sim_summary$look_time, "numeric")
   expect_length(  results$sim_summary$look_time, 4)
@@ -270,41 +276,41 @@ test_that("Success run ADPopSel with Binary case", {
 
   expect_type(  results$sim_results, "double")
   expect_length(results$sim_results, 15000)
-  
+
   expect_type(    results$sim_summary, "list")
-  expect_true(abs(results$sim_summary$futility - 0.2) < 0.2)
+  expect_true(abs(results$sim_summary$futility - 0.05) < 0.1)
   
   expect_is(      results$sim_summary$trad_power, "numeric")
   expect_length(  results$sim_summary$trad_power, 2)
   expect_true(
-    abs(results$sim_summary$trad_power[1] - 0.9) < 0.1,
+    abs(results$sim_summary$trad_power[1] - 0.92) < 0.1,
     info = paste0("trad_power[1] is out of range (",results$sim_summary$trad_power[1],")"))
   expect_true(
-    abs(results$sim_summary$trad_power[2] - 0.8) < 0.1,
+    abs(results$sim_summary$trad_power[2] - 0.86) < 0.1,
     info = paste0("trad_power[2] is out of range (",results$sim_summary$trad_power[2],")"))
 
   expect_is(      results$sim_summary$ad_power, "numeric")
   expect_length(  results$sim_summary$ad_power, 3)
   expect_true(
-    abs(results$sim_summary$ad_power[1] - 0.8) < 0.1,
+    abs(results$sim_summary$ad_power[1] - 0.82) < 0.1,
     info = paste0("ad_power[1] is out of range (",results$sim_summary$ad_power[1],")"))
   expect_true(
-    abs(results$sim_summary$ad_power[2] - 0.7) < 0.2,
+    abs(results$sim_summary$ad_power[2] - 0.76) < 0.1,
     info = paste0("ad_power[2] is out of range (",results$sim_summary$ad_power[2],")"))
   expect_true(
-    abs(results$sim_summary$ad_power[3] - 0.8) < 0.1,
+    abs(results$sim_summary$ad_power[3] - 0.83) < 0.1,
     info = paste0("ad_power[3] is out of range (",results$sim_summary$ad_power[3],")"))
 
   expect_is(      results$sim_summary$hypothesis_selection, "numeric")
   expect_length(  results$sim_summary$hypothesis_selection, 3)
   expect_true(
-    abs(results$sim_summary$hypothesis_selection[1] - 0.3) < 0.1,
+    abs(results$sim_summary$hypothesis_selection[1] - 0.28) < 0.1,
     info = paste0("hypothesis_selection[1] is out of range (",results$sim_summary$hypothesis_selection[1],")"))
   expect_true(
-    abs(results$sim_summary$hypothesis_selection[2] - 0.1) < 0.1,
+    abs(results$sim_summary$hypothesis_selection[2] - 0.13) < 0.1,
     info = paste0("hypothesis_selection[2] is out of range (",results$sim_summary$hypothesis_selection[2],")"))
   expect_true(
-    abs(results$sim_summary$hypothesis_selection[3] - 0.6) < 0.1,
+    abs(results$sim_summary$hypothesis_selection[3] - 0.57) < 0.1,
     info = paste0("hypothesis_selection[3] is out of range (",results$sim_summary$hypothesis_selection[3],")"))
 
   expect_is(      results$sim_summary$look_time, "numeric")
@@ -328,24 +334,24 @@ test_that("Success run ADPopSel with Time-to-event case", {
   expect_length(results$sim_results, 15000)
   
   expect_type(    results$sim_summary, "list")
-  expect_true(abs(results$sim_summary$futility - 0.2) < 0.2)
+  expect_true(abs(results$sim_summary$futility - 0.16) < 0.1)
   
   expect_is(      results$sim_summary$trad_power, "numeric")
   expect_length(  results$sim_summary$trad_power, 2)
   expect_true(
-    abs(results$sim_summary$trad_power[1] - 0.65) < 0.1,
+    abs(results$sim_summary$trad_power[1] - 0.66) < 0.1,
     info = paste0("trad_power[1] is out of range (",results$sim_summary$trad_power[1],")"))
   expect_true(
-    abs(results$sim_summary$trad_power[2] - 0.6) < 0.1,
+    abs(results$sim_summary$trad_power[2] - 0.58) < 0.1,
     info = paste0("trad_power[2] is out of range (",results$sim_summary$trad_power[2],")"))
 
   expect_is(      results$sim_summary$ad_power, "numeric")
   expect_length(  results$sim_summary$ad_power, 3)
   expect_true(
-    abs(results$sim_summary$ad_power[1] - 0.5) < 0.1,
+    abs(results$sim_summary$ad_power[1] - 0.55) < 0.1,
     info = paste0("ad_power[1] is out of range (",results$sim_summary$ad_power[1],")"))
   expect_true(
-    abs(results$sim_summary$ad_power[2] - 0.4) < 0.1,
+    abs(results$sim_summary$ad_power[2] - 0.35) < 0.1,
     info = paste0("ad_power[2] is out of range (",results$sim_summary$ad_power[2],")"))
   expect_true(
     abs(results$sim_summary$ad_power[3] - 0.65) < 0.1,
@@ -354,13 +360,13 @@ test_that("Success run ADPopSel with Time-to-event case", {
   expect_is(      results$sim_summary$hypothesis_selection, "numeric")
   expect_length(  results$sim_summary$hypothesis_selection, 3)
   expect_true(
-    abs(results$sim_summary$hypothesis_selection[1] - 0.3) < 0.2,
+    abs(results$sim_summary$hypothesis_selection[1] - 0.40) < 0.1,
     info = paste0("hypothesis_selection[1] is out of range (",results$sim_summary$hypothesis_selection[1],")"))
   expect_true(
-    abs(results$sim_summary$hypothesis_selection[2] - 0.25) < 0.1,
+    abs(results$sim_summary$hypothesis_selection[2] - 0.24) < 0.1,
     info = paste0("hypothesis_selection[2] is out of range (",results$sim_summary$hypothesis_selection[2],")"))
   expect_true(
-    abs(results$sim_summary$hypothesis_selection[3] - 0.4) < 0.1,
+    abs(results$sim_summary$hypothesis_selection[3] - 0.35) < 0.1,
     info = paste0("hypothesis_selection[3] is out of range (",results$sim_summary$hypothesis_selection[3],")"))
 
   expect_is(      results$sim_summary$look_time, "numeric")

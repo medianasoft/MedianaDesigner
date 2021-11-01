@@ -63,6 +63,9 @@ parameters$alpha = 0.025
 # Number of simulations, you should prefer more
 parameters$nsims = 100
 
+# Remove this parameter in your code:
+parameters$withoutCharts = TRUE
+
 # Run simulations to compute characteristics of the futility stopping rule
 results = FutRule(parameters)
 

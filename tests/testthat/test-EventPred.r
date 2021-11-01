@@ -33,6 +33,12 @@ context("EventPred - Success runs")
 
 test_that("Success run EventPred", {
 
+  # Set the seed of R‘s random number generator.
+  # It also takes effect to Rcpp randome generation functions.
+  # https://stackoverflow.com/questions/60119621/get-the-same-sample-of-integers-from-rcpp-as-base-r
+  suppressWarnings(RNGkind(sample.kind = "Rounding"))
+  set.seed(5)
+
   # Success run
   results = EventPred(
     list(
@@ -40,9 +46,11 @@ test_that("Success run EventPred", {
         time_points = baseCase$time_points,
         event_prior_distribution = baseCase$event_prior_distribution,
         dropout_prior_distribution = baseCase$dropout_prior_distribution,
-        enrollment_prior_distribution = baseCase$enrollment_prior_distribution#,
+        enrollment_prior_distribution = baseCase$enrollment_prior_distribution,
         # missing, use default 1000
         #nsims = baseCase$nsims
+        # Skip chart generation in tests
+        withoutCharts = TRUE
     )
   )
   expect_is(results, "EventPredResults")

@@ -27,6 +27,7 @@ EventPred(parameters)
     \item \code{event_prior_distribution}{: Numeric vector with two elements defining the shape and rate parameters of the prior gamma distribution for the event hazard rate. Each element must be positive. The parameters could be computed using the \code{\link{EventPredPriorDistribution}} function.}
     \item \code{dropout_prior_distribution}{: Numeric vector with two elements defining the shape and rate parameters of the prior gamma distribution for the patient dropout hazard rate. Each element must be positive. The parameters could be computed using the \code{\link{EventPredPriorDistribution}} function.}
     \item \code{enrollment_prior_distribution}{: Numeric vector with two elements defining the shape and rate parameters of the prior gamma distribution for the patient enrollment rate. Each element must be positive. The parameters could be computed using the \code{\link{EventPredPriorDistribution}} function.}
+    \item \code{random_seed}{: Integer value defining the random number generator seed. The default value is 49283.}
     \item \code{nsims}{: Integer value defining the number of simulation runs.}
     }
   }

@@ -38,6 +38,7 @@ ADRand(parameters)
     \item \code{enrollment_parameter}{: Numeric value defining the median enrollment time. The patient enrollment process is assumed to be governed by a truncated exponential distribution and this parameter defines the time point by which 50\% of the patients are enrolled into the trial. This value must be between 0 and the length of the patient enrollment period.}
     \item \code{dropout_rate}{: Numeric value defining the patient dropout rate. A uniform patient dropout process is assumed and thus this parameter defines the fraction of patients that will be excluded from the interim and final analyses. This value must be between 0 and 1.}
     \item{alpha}{: Numeric value defining the overall one-sided Type I error rate. The default value is 0.025.}
+    \item \code{random_seed}{: Integer value defining the random number generator seed. The default value is 49283.}
     \item \code{nsims}{: Integer value defining the number of simulation runs.}
     }
   }

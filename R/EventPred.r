@@ -4,6 +4,29 @@ EventPred = function(parameters) {
 
   if (typeof(parameters) != "list") stop("Function parameters must be a list of named values.", call. = FALSE)
 
+  if (is.null(parameters$random_seed)) {
+    
+    random_seed = 49283
+
+  } else {
+
+    random_seed = ContinuousErrorCheck(parameters$random_seed, 
+                                 1, 
+                                 lower_values = 1,
+                                 lower_values_sign = c(">="),
+                                 upper_values = 100000,
+                                 upper_values_sign = c("<="),
+                                 "Seed for the random number generator (random_seed)",
+                                 c("Value"),
+                                 "int",
+                                 NA) 
+
+  }
+
+  parameters$random_seed = random_seed
+
+  set.seed(random_seed)
+
   if (is.null(parameters$data_set)) stop("Data set with the patient enrollment, event and dropout information (data_set): Value must be specified.", call. = FALSE)
 
   data_set = parameters$data_set
@@ -371,31 +394,35 @@ EventPredReportDoc = function(results) {
 
   ##########################################
 
-  filename = "prediction.emf" 
+  if (is.null(parameters$withoutCharts)) {   # skip chart generation on tests
 
-  xlabels = seq(from = 0, to = max(time_points) + 10, by = 10)
-  ylabels = seq(from = 0, to = max(prediction) + 10, by = 10)
+    filename = "prediction.emf" 
 
-  emf(file = filename, width = width, height = height, pointsize = pointsize)
+    xlabels = seq(from = 0, to = max(time_points) + 10, by = 10)
+    ylabels = seq(from = 0, to = max(prediction) + 10, by = 10)
 
-  plot(x = interim_analysis$time, y = interim_analysis$cumsum, xlab="",ylab="", xlim=c(min(xlabels), max(xlabels)), ylim = c(min(ylabels), max(ylabels)), col="black", lwd = 2, type="l", axes=FALSE)
-  polygon(c(rev(time_points), time_points), c(rev(prediction[, 2]), prediction[, 1]), col = "grey80", border = NA)
-  lines(x = time_points, y = prediction[, 3], col="red", lwd = 2)
-  axis(1, at = xlabels, labels = as.character(xlabels), tck=0.02, mgp=c(0, 0.4, 0))
-  axis(2, at = ylabels, labels = as.character(ylabels), tck=0.02, mgp=c(0, 0.4, 0))
-  mtext("Number of events", side=2, line=1.5)
-  mtext("Time", side=1, line=1.5)
-  box() 
-  dev.off()
+    emf(file = filename, width = width, height = height, pointsize = pointsize)
 
-  footnote = "Black curve: Observed events. Red curve: Predicted mean number of events. Gray band: 95% predictive interval."
+    plot(x = interim_analysis$time, y = interim_analysis$cumsum, xlab="",ylab="", xlim=c(min(xlabels), max(xlabels)), ylim = c(min(ylabels), max(ylabels)), col="black", lwd = 2, type="l", axes=FALSE)
+    polygon(c(rev(time_points), time_points), c(rev(prediction[, 2]), prediction[, 1]), col = "grey80", border = NA)
+    lines(x = time_points, y = prediction[, 3], col="red", lwd = 2)
+    axis(1, at = xlabels, labels = as.character(xlabels), tck=0.02, mgp=c(0, 0.4, 0))
+    axis(2, at = ylabels, labels = as.character(ylabels), tck=0.02, mgp=c(0, 0.4, 0))
+    mtext("Number of events", side=2, line=1.5)
+    mtext("Time", side=1, line=1.5)
+    box() 
+    dev.off()
 
-  item_list[[item_index]] =  list(label = paste0("Figure ", figure_index, ". Event prediction at pre-defined time points"), 
-                           filename = filename,
-                           dim = c(width, height),
-                           type = "emf_plot",
-                           footnote = footnote,
-                           page_break = FALSE)
+    footnote = "Black curve: Observed events. Red curve: Predicted mean number of events. Gray band: 95% predictive interval."
+
+    item_list[[item_index]] =  list(label = paste0("Figure ", figure_index, ". Event prediction at pre-defined time points"), 
+                            filename = filename,
+                            dim = c(width, height),
+                            type = "emf_plot",
+                            footnote = footnote,
+                            page_break = FALSE)
+
+  }
 
   ##########################################
 
