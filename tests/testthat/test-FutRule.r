@@ -1,4 +1,5 @@
-# Test the input of the FutRule function
+commonNSim = 100
+isTestMultiCore = FALSE
 
 # Normal case parameters
 normalCase = list(
@@ -30,7 +31,7 @@ normalCase = list(
   alpha = 0.025,
 
   # Number of simulations
-  nsims = 1000
+  nsims = commonNSim
 )
 
 # Binary case parameters
@@ -61,7 +62,7 @@ binaryCase = list(
   alpha = 0.025,
 
   # Number of simulations
-  nsims = 1000
+  nsims = commonNSim
 )
 
 # Time-to-event case parameters
@@ -102,26 +103,13 @@ timeToEventCase = list(
   alpha = 0.025,
 
   # Number of simulations
-  nsims = 1000
+  nsims = commonNSim
 )
 
 context("FutRule - Success runs")
 
-test_that("Success run FutRule with Normal case", {
-
-  # Set the seed of R‘s random number generator.
-  # It also takes effect to Rcpp randome generation functions.
-  # https://stackoverflow.com/questions/60119621/get-the-same-sample-of-integers-from-rcpp-as-base-r
-  suppressWarnings(RNGkind(sample.kind = "Rounding"))
-  set.seed(5)
-
-  parameters = normalCase
-  # Skip chart generation in tests
-  parameters$withoutCharts = TRUE
-
-  # Success run
-  results = FutRule(parameters)
-  expect_is(results, "FutRuleResults")
+checkExpectationsForNormalCase = function(results) {
+  expect_s3_class(results, "FutRuleResults")
   expect_named(results, c("parameters", "sim_summary"))
 
   sim_summary = results$sim_summary
@@ -131,6 +119,18 @@ test_that("Success run FutRule with Normal case", {
   expect_length(sim_summary$accuracy, 101)
   expect_length(sim_summary$cp_threshold, 101)
 
+  # print(sim_summary)
+  # plot(1:101, sim_summary$sensitivity)
+
+  # check sim_summary$sensitivity
+  sensitivity = sim_summary$sensitivity
+  expect_equal(min(sensitivity), 0, tolerance=0.01)
+  expect_equal(max(sensitivity), 1, tolerance=0.01)
+  expect_equal(median(sensitivity), 0.70, tolerance=0.02)  # <- 
+  expect_equal(mean(sensitivity),   0.67, tolerance=0.05)
+  expect_equal(sum(sensitivity),    64.868, tolerance=1.0)  # <- 
+
+  # check accuracy & cp_threshold
   accuracy = sim_summary$accuracy
   cp_threshold = sim_summary$cp_threshold
 
@@ -141,16 +141,38 @@ test_that("Success run FutRule with Normal case", {
   optimal_lower = round(100 * min(zone), 1)
   optimal_upper = round(100 * max(zone), 1)
 
-  expect_equal(optimal_lower, 6, 5, 
-    info = paste("optimal_lower(",optimal_lower,") is out of range 6±5"))
-  expect_true(
-    abs(optimal_upper - 65) < 30,
-    info = paste("optimal_upper(",optimal_upper,") is out of range 65±30"))
+  expect_equal(optimal_lower, 6, tolerance=1)
+  expect_equal(optimal_point, 30, tolerance=1)
+  expect_equal(optimal_upper, 59, tolerance=5)
+}
+
+test_that("Success run FutRule with Normal case (single core)", {
+
+  parameters = normalCase
+  # Run once with random_seed parameter
+  parameters$random_seed = 49283
+  # Skip chart generation in tests
+  parameters$withoutCharts = TRUE
+
+  # Success run
+  results = FutRule(parameters)
+  checkExpectationsForNormalCase(results)
 
   # Check for report generation
   FutRuleReportDoc(results)
   GenerateReport(results, tempfile(fileext = ".docx"))
 })
+
+if (isTestMultiCore) {
+  test_that("Success run FutRule with Normal case (two cores)", {
+    parameters = normalCase
+    parameters$random_seed = 49283
+    parameters$withoutCharts = TRUE
+    parameters$ncores = 2
+    results = FutRule(parameters)
+    checkExpectationsForNormalCase(results)
+  })
+}
 
 test_that("Success run FutRule with Binary case", {
 

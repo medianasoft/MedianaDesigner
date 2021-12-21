@@ -1,6 +1,10 @@
 require(devEMF)
 require(officer)
 require(flextable)
+require(foreach)
+require(doParallel)
+require(doRNG)
+require(parallel)
 
 endpoint_list = c("Normal", "Binary", "Time-to-event")
 
@@ -246,7 +250,8 @@ SaveReport = function(report, report_title) {
 
         }
 
-        # Enhanced metafile graphics produced by package devEMF 
+        # Enhanced metafile graphics produced by package devEMF
+        # nocov start
         if (type == "emf_plot") {
 
             doc = officer::body_add_par(doc, value = label, style = "heading 2")
@@ -261,6 +266,7 @@ SaveReport = function(report, report_title) {
             if (file.exists(filename)) file.remove(filename)   
 
         }
+        # nocov end
 
       }    
 

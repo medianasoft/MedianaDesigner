@@ -381,6 +381,7 @@ vector<double> FixedSeqAdj(const std::vector<double> &pvalue, const std::vector<
 // End of FixedSeqAdj
 
 // Global test based on the truncated Holm procedure with equal weights
+// # nocov start 
 double HolmGlobal(const std::vector<double> &pvalue, const int &n, const double &gamma) {
 
     int m = pvalue.size(), i;
@@ -407,9 +408,11 @@ double HolmGlobal(const std::vector<double> &pvalue, const int &n, const double 
     return globalp;
 
 }
+// # nocov end
 // End of HolmGlobal
 
 // Global test based on the truncated Hochberg procedure with equal weights
+// # nocov start 
 double HochbergGlobal(const std::vector<double> &pvalue, const int &n, const double &gamma) {
 
     int m = pvalue.size(), i;
@@ -438,6 +441,7 @@ double HochbergGlobal(const std::vector<double> &pvalue, const int &n, const dou
     return globalp;
 
 }
+// # nocov end 
 // End of HochbergGlobal
 
 // Global test based on the truncated Hommel procedure with equal weights
@@ -477,11 +481,10 @@ double HommelGlobal(const std::vector<double> &pvalue, const int &n, const doubl
 double IntPvalue(const vector<double> &pvalue, const vector<double> &c) {
 
     double intp = 1.0;
-
     int m = pvalue.size(), i;
 
     for(i = 0; i < m; i++) {
-      if (c[i] > 0.0 && pvalue[i]/c[i] < intp) intp = pvalue[i] / c[i];
+        if (c[i] > 0.0 && pvalue[i]/c[i] < intp) intp = pvalue[i] / c[i];
     }
 
     return intp;
@@ -495,13 +498,13 @@ double IntPvalue(const vector<double> &pvalue, const vector<double> &c) {
 // GAMMA: Truncation parameter (0<=GAMMA<1).
 double ErrorFrac(const double &k, const double &n, const double &gamma) {
   
-  double f = 0.0;
+    double f = 0.0;
 
-  if (k>0) {
-    if (k == n) f = 1.0; else f = gamma + (1.0 - gamma) * (k + 0.0)/ (n + 0.0);
-  }
-  
-  return f;
+    if (k>0) {
+        if (k == n) f = 1.0; else f = gamma + (1.0 - gamma) * (k + 0.0)/ (n + 0.0);
+    }
+    
+    return f;
   
 }
 
@@ -535,21 +538,20 @@ vector<double> MixtureProcAdjP(const int &nfam, const int &nperfam, const vector
     }
 
     for (i = 0; i < nint; i++) {
-    for (j = 0; j < nfam - 1; j++)  {
-      for (k = 0; k < nperfam; k++)
-      {
-        // Index of the current null hypothesis in Family j
-        m = j * nperfam + k + 1;
-        // If this null hypothesis is included in the intersection hypothesis
-        // all dependent null hypotheses must be removed from the intersection hypothesis
-        if (int_orig(i, m - 1) == 1) {
-          for (l = 0; l < nfam - (j + 1); l++) {
-            int_rest(i, m + (l + 1) * nperfam - 1) = 0;        
-            fam_rest(i, m + (l + 1) * nperfam - 1) = 0;                    
-          }
+        for (j = 0; j < nfam - 1; j++) {
+            for (k = 0; k < nperfam; k++) {
+                // Index of the current null hypothesis in Family j
+                m = j * nperfam + k + 1;
+                // If this null hypothesis is included in the intersection hypothesis
+                // all dependent null hypotheses must be removed from the intersection hypothesis
+                if (int_orig(i, m - 1) == 1) {
+                    for (l = 0; l < nfam - (j + 1); l++) {
+                        int_rest(i, m + (l + 1) * nperfam - 1) = 0;        
+                        fam_rest(i, m + (l + 1) * nperfam - 1) = 0;                    
+                    }
+                }
+            }
         }
-      }
-    }
     }
   
     // Number of null hypotheses from each family included in each intersection 
@@ -567,21 +569,21 @@ vector<double> MixtureProcAdjP(const int &nfam, const int &nperfam, const vector
     for (i = 0; i < nint; i++) {    
         for (j = 0; j < nfam; j++) {
 
-          // Index vector in the current family
-          temp_vec = ExtractRow(int_orig, i);
-          sum = 0.0;
-          for (k = j * nperfam; k < (j + 1) * nperfam; k++) sum += temp_vec[k];
-          korig(i,j) = sum;
+            // Index vector in the current family
+            temp_vec = ExtractRow(int_orig, i);
+            sum = 0.0;
+            for (k = j * nperfam; k < (j + 1) * nperfam; k++) sum += temp_vec[k];
+            korig(i,j) = sum;
 
-          temp_vec = ExtractRow(int_rest, i);
-          sum = 0.0;
-          for (k = j * nperfam; k < (j + 1) * nperfam; k++) sum += temp_vec[k];
-          krest(i,j) = sum;
+            temp_vec = ExtractRow(int_rest, i);
+            sum = 0.0;
+            for (k = j * nperfam; k < (j + 1) * nperfam; k++) sum += temp_vec[k];
+            krest(i,j) = sum;
 
-          temp_vec = ExtractRow(fam_rest, i);
-          sum = 0.0;
-          for (k = j * nperfam; k < (j + 1) * nperfam; k++) sum += temp_vec[k];
-          nrest(i,j) = sum;
+            temp_vec = ExtractRow(fam_rest, i);
+            sum = 0.0;
+            for (k = j * nperfam; k < (j + 1) * nperfam; k++) sum += temp_vec[k];
+            nrest(i,j) = sum;
 
         }
     } 

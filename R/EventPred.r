@@ -25,6 +25,10 @@ EventPred = function(parameters) {
 
   parameters$random_seed = random_seed
 
+  # Set the seed of R's random number generator.
+  # It also takes effect to Rcpp random generation functions.
+  # https://stackoverflow.com/questions/60119621/get-the-same-sample-of-integers-from-rcpp-as-base-r
+  suppressWarnings(RNGkind(sample.kind = "Rounding"))
   set.seed(random_seed)
 
   if (is.null(parameters$data_set)) stop("Data set with the patient enrollment, event and dropout information (data_set): Value must be specified.", call. = FALSE)
@@ -117,13 +121,75 @@ EventPred = function(parameters) {
     parameters$nsims = 1000
   }
 
+  if (!is.null(parameters$ncores)) {
+    # nocov start
+    # Maximum number of cores
+    max_ncores = parallel::detectCores()
+
+    ncores = 
+      ContinuousErrorCheck(parameters$ncores, 
+                           1, 
+                           lower_values = c(1),
+                           lower_values_sign = c(">="),
+                           upper_values = c(max_ncores),
+                           upper_values_sign = c("<="),
+                           "Number of cores for parallel calculations (ncores)",
+                           c("Value"),
+                           "int",
+                           NA) 
+    # nocov end
+  } else {
+    parameters$ncores = 1
+  }
+
+  # Number of simulations per core
+  parameters$nsims_per_core = ceiling(parameters$nsims / parameters$ncores)   
+
   ###########################################################
 
-  # Compute predictions 
-
-  results = EventPredR(parameters)
+  # Compute predictions on multiple cores
 
   n_scenarios = length(time_points)
+  ncores = parameters$ncores
+
+  if (ncores > 1) {
+    # nocov start
+    cl = parallel::makeCluster(ncores)
+
+    # Export all functions in the global environment to each node
+    parallel::clusterExport(cl, ls(envir = .GlobalEnv))
+
+    doParallel::registerDoParallel(cl)
+    simulation_list = foreach(counter=(1:ncores), .packages = c("MedianaDesigner")) %dorng% { 
+      EventPredRSingleCore(parameters)
+    }
+    stopCluster(cl)
+
+    # Combine the simulation results across the cores 
+
+    number_events = list()
+
+    for (scenario_index in 1:n_scenarios) {
+
+      number_events_for_scenario = NULL
+      for (core_index in 1:ncores) {
+
+        number_events_for_scenario = c(number_events_for_scenario, 
+                                       simulation_list[[core_index]]$number_events[[scenario_index]])
+
+      }
+      number_events[[scenario_index]] = number_events_for_scenario
+
+    }
+
+    results = list(number_events = number_events,
+                 posterior_distributions = simulation_list[[1]]$posterior_distributions)
+    # nocov end
+  } else {
+
+    results = EventPredRSingleCore(parameters)
+
+  }
 
   # Original event data from the interim analysis data set
   time = parameters$data_set$time + parameters$data_set$enrollment
@@ -146,7 +212,6 @@ EventPred = function(parameters) {
   class(results) = "EventPredResults"
 
   return(results)
-
 
 }
 
@@ -395,7 +460,7 @@ EventPredReportDoc = function(results) {
   ##########################################
 
   if (is.null(parameters$withoutCharts)) {   # skip chart generation on tests
-
+    # nocov start
     filename = "prediction.emf" 
 
     xlabels = seq(from = 0, to = max(time_points) + 10, by = 10)
@@ -421,7 +486,7 @@ EventPredReportDoc = function(results) {
                             type = "emf_plot",
                             footnote = footnote,
                             page_break = FALSE)
-
+    # nocov end
   }
 
   ##########################################
@@ -435,3 +500,12 @@ EventPredReportDoc = function(results) {
 }
 # End of EventPredReportDoc
 
+EventPredRSingleCore = function(parameters) {
+
+  params_for_core = parameters
+  params_for_core$nsims = params_for_core$nsims_per_core
+  simulations = EventPredR(params_for_core)
+
+  return(simulations)
+
+}

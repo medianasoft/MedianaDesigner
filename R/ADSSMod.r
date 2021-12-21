@@ -25,6 +25,10 @@ ADSSMod = function(parameters) {
 
   parameters$random_seed = random_seed
 
+  # Set the seed of R's random number generator.
+  # It also takes effect to Rcpp random generation functions.
+  # https://stackoverflow.com/questions/60119621/get-the-same-sample-of-integers-from-rcpp-as-base-r
+  suppressWarnings(RNGkind(sample.kind = "Rounding"))
   set.seed(random_seed)
     
   if (is.null(parameters$endpoint_type)) stop("Endpoint type (endpoint_type): Value must be specified.", call. = FALSE)
@@ -161,6 +165,30 @@ ADSSMod = function(parameters) {
   } else {
     parameters$nsims = 1000
   }
+
+  if (!is.null(parameters$ncores)) {
+    # nocov start
+    # Maximum number of cores
+    max_ncores = parallel::detectCores()
+
+    ncores = 
+      ContinuousErrorCheck(parameters$ncores, 
+                           1, 
+                           lower_values = c(1),
+                           lower_values_sign = c(">="),
+                           upper_values = c(max_ncores),
+                           upper_values_sign = c("<="),
+                           "Number of cores for parallel calculations (ncores)",
+                           c("Value"),
+                           "int",
+                           NA) 
+    # nocov end
+  } else {
+    parameters$ncores = 1
+  }
+
+  # Number of simulations per core
+  parameters$nsims_per_core = ceiling(parameters$nsims / parameters$ncores)   
 
   if (!is.null(parameters$alpha)) {
 
@@ -402,11 +430,37 @@ ADSSMod = function(parameters) {
 
   ###########################################################
 
-  # Run simulations to compute key characteristics
+  # Run simulations on multiple cores to compute key characteristics
 
-  simulations = ADSSModC(parameters)
+  if (parameters$ncores > 1) {
+    # nocov start
+    cl = parallel::makeCluster(parameters$ncores)
 
-  sim_results = simulations$sim_results
+    # Export all functions in the global environment to each node
+    parallel::clusterExport(cl, ls(envir = .GlobalEnv))
+
+    doParallel::registerDoParallel(cl)
+    simulation_list = foreach(counter=(1:parameters$ncores), .packages = c("MedianaDesigner")) %dorng% { 
+      ADSSModSingleCore(parameters)
+    }
+    stopCluster(cl)
+
+    # Combine the simulation results across the cores 
+
+    sim_results = NULL
+
+    for (i in 1:parameters$ncores) {
+
+      sim_results = rbind(sim_results, simulation_list[[i]]$sim_results)
+
+    }
+    # nocov end
+  } else {
+
+    simulations = ADSSModSingleCore(parameters)
+    sim_results = simulations$sim_results
+
+  }
 
   # Add column names
   column_names = c("futility_flag", "not_used", "increase_flag", "adapt_sign_outcome", "ia1_time", "ia2_time", "fa_time", "ia1_cp", "ia2_cp", "ia1_event_count", "ia2_event_count", "fa_event_count", "increase", "ia1_hr", "ia2_hr", "fa_hr", "stage1_pvalue", "stage2_pvalue", "trad_sign_outcome")
@@ -414,7 +468,7 @@ ADSSMod = function(parameters) {
 
   sim_summary = list()
 
-  nsims = parameters$nsims
+  nsims = nrow(sim_results)
 
   sim_summary$futility = mean(sim_results[, 1])
   sim_summary$increase = mean(sim_results[, 3])
@@ -762,3 +816,12 @@ ADSSModReportDoc = function(results) {
 }
 # End of ADSSModReportDoc
 
+ADSSModSingleCore = function(parameters) {
+
+  params_for_run = parameters
+  params_for_run$nsims = params_for_run$nsims_per_core
+  simulations = ADSSModC(params_for_run)
+
+  return(simulations)
+
+}

@@ -25,6 +25,10 @@ ADTreatSel = function(parameters) {
 
   parameters$random_seed = random_seed
 
+  # Set the seed of R's random number generator.
+  # It also takes effect to Rcpp random generation functions.
+  # https://stackoverflow.com/questions/60119621/get-the-same-sample-of-integers-from-rcpp-as-base-r
+  suppressWarnings(RNGkind(sample.kind = "Rounding"))
   set.seed(random_seed)
   
   if (is.null(parameters$endpoint_type)) stop("Endpoint type (endpoint_type): Value must be specified.", call. = FALSE)
@@ -156,6 +160,30 @@ ADTreatSel = function(parameters) {
   } else {
     parameters$nsims = 1000
   }
+
+  if (!is.null(parameters$ncores)) {
+
+    # Maximum number of cores
+    max_ncores = parallel::detectCores()
+
+    ncores = 
+      ContinuousErrorCheck(parameters$ncores, 
+                           1, 
+                           lower_values = c(1),
+                           lower_values_sign = c(">="),
+                           upper_values = c(max_ncores),
+                           upper_values_sign = c("<="),
+                           "Number of cores for parallel calculations (ncores)",
+                           c("Value"),
+                           "int",
+                           NA) 
+
+  } else {
+    parameters$ncores = 1
+  }
+
+  # Number of simulations per core
+  parameters$nsims_per_core = ceiling(parameters$nsims / parameters$ncores)   
 
   if (!is.null(parameters$alpha)) {
 
@@ -397,11 +425,37 @@ ADTreatSel = function(parameters) {
 
   ###########################################################
 
-  # Run simulations to compute key characteristics
+  # Run simulations on multiple cores to compute key characteristics
 
-  simulations = ADTreatSelC(parameters)
+  if (parameters$ncores > 1) {
 
-  sim_results = simulations$sim_results
+    cl = parallel::makeCluster(parameters$ncores)
+
+    # Export all functions in the global environment to each node
+    parallel::clusterExport(cl, ls(envir = .GlobalEnv))
+
+    doParallel::registerDoParallel(cl)
+    simulation_list = foreach(counter=(1:parameters$ncores), .packages = c("MedianaDesigner")) %dorng% { 
+      ADTreatSelSingleCore(parameters)
+    }
+    stopCluster(cl)
+
+    # Combine the simulation results across the cores 
+
+    sim_results = NULL
+
+    for (i in 1:parameters$ncores) {
+
+      sim_results = rbind(sim_results, simulation_list[[i]]$sim_results)
+
+    }
+
+  } else {
+
+    simulations = ADTreatSelSingleCore(parameters)
+    sim_results = simulations$sim_results
+
+  }
 
   # Add column names
   column_names = c("adapt_sign_outcome")
@@ -411,6 +465,8 @@ ADTreatSel = function(parameters) {
   colnames(sim_results) = column_names
 
   sim_summary = list()
+
+  nsims = nrow(sim_results)
 
   ad_outcome = sim_results[, 1]
   trad_outcome = sim_results[, 1 + (1:(narms - 1))]
@@ -765,3 +821,12 @@ ADTreatSelReportDoc = function(results) {
 }
 # End of ADTreatSelReportDoc
 
+ADTreatSelSingleCore = function(parameters) {
+
+  params_for_run = parameters
+  params_for_run$nsims = params_for_run$nsims_per_core
+  simulations = ADTreatSelC(params_for_run)
+
+  return(simulations)
+
+}

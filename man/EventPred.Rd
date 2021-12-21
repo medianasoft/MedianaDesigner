@@ -1,6 +1,7 @@
 \name{EventPred}
 \alias{EventPred}
 \alias{EventPredR}
+\alias{EventPredRSingleCore}
 \alias{EventPredEventCount}
 \title{
 Simulation-based event prediction in trials with an event-driven design
@@ -29,6 +30,7 @@ EventPred(parameters)
     \item \code{enrollment_prior_distribution}{: Numeric vector with two elements defining the shape and rate parameters of the prior gamma distribution for the patient enrollment rate. Each element must be positive. The parameters could be computed using the \code{\link{EventPredPriorDistribution}} function.}
     \item \code{random_seed}{: Integer value defining the random number generator seed. The default value is 49283.}
     \item \code{nsims}{: Integer value defining the number of simulation runs.}
+    \item \code{ncores}{: Integer value defining the number of cores for parallel calculations. The number of cores cannot exceed the maximum available number of cores. The default value is 1.} 
     }
   }
 }

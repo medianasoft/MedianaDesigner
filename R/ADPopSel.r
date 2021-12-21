@@ -25,6 +25,10 @@ ADPopSel = function(parameters) {
 
   parameters$random_seed = random_seed
 
+  # Set the seed of R's random number generator.
+  # It also takes effect to Rcpp random generation functions.
+  # https://stackoverflow.com/questions/60119621/get-the-same-sample-of-integers-from-rcpp-as-base-r
+  suppressWarnings(RNGkind(sample.kind = "Rounding"))
   set.seed(random_seed)
   
   if (is.null(parameters$endpoint_type)) stop("Endpoint type (endpoint_type): Value must be specified.", call. = FALSE)
@@ -174,6 +178,30 @@ ADPopSel = function(parameters) {
   } else {
     parameters$nsims = 1000
   }
+
+  if (!is.null(parameters$ncores)) {
+    # nocov start
+    # Maximum number of cores
+    max_ncores = parallel::detectCores()
+
+    ncores = 
+      ContinuousErrorCheck(parameters$ncores, 
+                           1, 
+                           lower_values = c(1),
+                           lower_values_sign = c(">="),
+                           upper_values = c(max_ncores),
+                           upper_values_sign = c("<="),
+                           "Number of cores for parallel calculations (ncores)",
+                           c("Value"),
+                           "int",
+                           NA) 
+    # nocov end
+  } else {
+    parameters$ncores = 1
+  }
+
+  # Number of simulations per core
+  parameters$nsims_per_core = ceiling(parameters$nsims / parameters$ncores)   
 
   if (!is.null(parameters$alpha)) {
 
@@ -424,20 +452,45 @@ ADPopSel = function(parameters) {
 
   ###########################################################
 
-  # Run simulations to compute key characteristics
+  # Run simulations on multiple cores to compute key characteristics
 
-  simulations = ADPopSelC(parameters)
+  if (parameters$ncores > 1) {
+    # nocov start
+    cl = parallel::makeCluster(parameters$ncores)
 
-  sim_results = simulations$sim_results
+    # Export all functions in the global environment to each node
+    parallel::clusterExport(cl, ls(envir = .GlobalEnv))
+
+    doParallel::registerDoParallel(cl)
+    simulation_list = foreach(counter=(1:parameters$ncores), .packages = c("MedianaDesigner")) %dorng% { 
+      ADPopSelSingleCore(parameters)
+    }
+    stopCluster(cl)
+
+    # Combine the simulation results across the cores 
+
+    sim_results = NULL
+
+    for (i in 1:parameters$ncores) {
+
+      sim_results = rbind(sim_results, simulation_list[[i]]$sim_results)
+
+    }
+    # nocov end
+  } else {
+
+    simulations = ADPopSelSingleCore(parameters)
+    sim_results = simulations$sim_results
+
+  }
 
   # Add column names
   column_names = c("trad_sign_outcome_op", "trad_sign_outcome_bplus", "adapt_sign_outcome_op", "adapt_sign_outcome_bplus", "ia2_cp", "futility_flag", "effect_size_bminus", "effect_size_bplus", "selection_flag_op_only", "selection_flag_bplus_only", "selection_flag_both", "ia1_time", "ia2_time", "fa_time_op_only", "fa_time_bplus_only") 
-
   colnames(sim_results) = column_names
 
   sim_summary = list()
 
-  nsims = parameters$nsims
+  nsims = nrow(sim_results)
 
   sim_summary$trad_power = colMeans(sim_results[, 1:2])
   ad_power = rep(0, 3)
@@ -460,8 +513,6 @@ ADPopSel = function(parameters) {
   class(results) = "ADPopSelResults"
 
   return(results)
-
-
 }    
 
 ADPopSelReportDoc = function(results) {
@@ -761,3 +812,12 @@ ADPopSelReportDoc = function(results) {
 }
 # End of ADPopSelReportDoc
 
+ADPopSelSingleCore = function(parameters) {
+
+  params_for_run = parameters
+  params_for_run$nsims = params_for_run$nsims_per_core
+  simulations = ADPopSelC(params_for_run)
+
+  return(simulations)
+
+}

@@ -1,4 +1,5 @@
-# Test the input of the EventPred function
+commonNSim = 100
+isTestMultiCore = FALSE
 
 # Base case
 baseCase = list(
@@ -26,18 +27,28 @@ baseCase = list(
       EventPredPriorDistribution(expected = 35, uncertainty = 0.3),
 
   # Number of simulations
-  nsims = 1000
+  nsims = commonNSim
 )
 
 context("EventPred - Success runs")
 
-test_that("Success run EventPred", {
+checkExpectationsForBaseCase1 = function(res) {
+  expect_s3_class(res, "EventPredResults")
+  expect_named(res, c('parameters', 'interim_analysis', 'predictions'))
 
-  # Set the seed of R‘s random number generator.
-  # It also takes effect to Rcpp randome generation functions.
-  # https://stackoverflow.com/questions/60119621/get-the-same-sample-of-integers-from-rcpp-as-base-r
-  suppressWarnings(RNGkind(sample.kind = "Rounding"))
-  set.seed(5)
+  # check expected result size
+  expect_s3_class(res$interim_analysis, "data.frame")
+  expect_equal(dim(res$interim_analysis), c(457,3))
+  expect_is(res$predictions, "matrix")
+  expect_equal(dim(res$predictions), c(13, 3))
+
+  # check predictions
+  predictions = res$predictions
+  sum_all_predictions = Reduce('+', predictions)
+  expect_equal(sum_all_predictions, 8660.471, tolerance=0.01)
+}
+
+test_that("Success run EventPred (one core)", {
 
   # Success run
   results = EventPred(
@@ -50,27 +61,28 @@ test_that("Success run EventPred", {
         # missing, use default 1000
         #nsims = baseCase$nsims
         # Skip chart generation in tests
-        withoutCharts = TRUE
+        withoutCharts = TRUE,
+        # First run with initial random seed
+        random_seed = 49283
     )
   )
-  expect_is(results, "EventPredResults")
-  expect_named(results, c('parameters', 'interim_analysis', 'predictions'))
-
-  expect_is(results$interim_analysis, "data.frame")
-  expect_length(results$interim_analysis, 3)
-  expect_is(results$predictions, "matrix")
-  expect_length(results$predictions, 39)
-
-  predictions = results$predictions
-  predictionTarget = predictions[13,3]
-  expect_true(
-    abs(predictionTarget - 350) < 10,
-    info = paste("predictionTarget(",predictionTarget,") is out of range 350±10"))
+  checkExpectationsForBaseCase1(results)
 
   # Check for report generation
   EventPredReportDoc(results)
   GenerateReport(results, tempfile(fileext = ".docx"))
+
 })
+
+if (isTestMultiCore) {
+  test_that("Success run EventPred (two cores)", {
+    # Success run
+    params = baseCase
+    params$ncores = 2
+    results = EventPred(params)
+    checkExpectationsForBaseCase1(results)
+  })
+}
 
 context("EventPred - Error checks")
 

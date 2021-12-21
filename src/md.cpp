@@ -27,6 +27,8 @@ int n_models = 4, direction_index_local = 1;
 //TODO: Move to calculation structures for ADRand
 double final_gradient;
 
+
+
 vector<double> HochbergOutcome(const vector<double> &pvalue, const double &alpha) {
 
     int m = pvalue.size();
@@ -246,8 +248,10 @@ vector<double> HypothesisSelection(const double &effect_size_minus, const double
 
     } else {
 
+        // # nocov start
         // Both populations are always selected if the interaction condition is not specified
-        outcome3 = 1.0;     // # nocov
+        outcome3 = 1.0;
+        // # nocov end
 
     }
 
@@ -267,12 +271,12 @@ vector<double> HypothesisSelection(const double &effect_size_minus, const double
 }
 // End of HypothesisSelection
 
-//REM, 43
+// REM, 43
 double Logit(const double &x) {
     return log(x /(1.0 - x));
 }
 
-//REM, 47
+// REM, 47
 // Compute the mean of a vector
 double MeanVec(const vector<double> &vec)
 {
@@ -2313,8 +2317,6 @@ List FutRuleC(const List &parameters_arg) {
 
         }
         // Time-to-event endpoints
-
-
 
     }
     // End of simulations

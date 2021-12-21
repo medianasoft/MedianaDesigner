@@ -72,6 +72,10 @@ ADRand = function(parameters) {
 
     parameters$random_seed = random_seed
 
+    # Set the seed of R's random number generator.
+    # It also takes effect to Rcpp random generation functions.
+    # https://stackoverflow.com/questions/60119621/get-the-same-sample-of-integers-from-rcpp-as-base-r
+    suppressWarnings(RNGkind(sample.kind = "Rounding"))
     set.seed(random_seed)
         
     if (is.null(parameters$endpoint_type)) stop("Endpoint type (endpoint_type): Value must be specified.", call. = FALSE)
@@ -366,6 +370,30 @@ ADRand = function(parameters) {
       parameters$nsims = 1000     # nocov
     }
 
+    if (!is.null(parameters$ncores)) {
+      # nocov start
+      # Maximum number of cores
+      max_ncores = parallel::detectCores()
+
+      ncores = 
+        ContinuousErrorCheck(parameters$ncores, 
+                            1, 
+                            lower_values = c(1),
+                            lower_values_sign = c(">="),
+                            upper_values = c(max_ncores),
+                            upper_values_sign = c("<="),
+                            "Number of cores for parallel calculations (ncores)",
+                            c("Value"),
+                            "int",
+                            NA) 
+      # nocov end
+    } else {
+      parameters$ncores = 1
+    }
+
+    # Number of simulations per core
+    parameters$nsims_per_core = ceiling(parameters$nsims / parameters$ncores)
+
     if (!is.null(parameters$balance)) {
 
       balance = 
@@ -396,24 +424,51 @@ ADRand = function(parameters) {
 
     ###########################################################
 
-    # Run simulations
+    # Run simulations on multiple cores to compute key characteristics
 
-    withCallingHandlers({        
+    ncores = parameters$ncores
 
-        sim_results = ADRandC(parameters)
+    if (ncores > 1) {
+      # nocov start
+      cl = parallel::makeCluster(ncores)
 
-        },
+      # Export all functions in the global environment to each node
+      parallel::clusterExport(cl, ls(envir = .GlobalEnv))
 
-        warning = function(c) {
-          # nocov start
-          msg <- conditionMessage(c)
-          if ( grepl("the line search step became smaller than the minimum value allowed", msg, fixed = TRUE) ) {
-            invokeRestart("muffleWarning")
-          }
-          # nocov end
-        }
+      doParallel::registerDoParallel(cl)
+      simulation_list = foreach(counter=(1:ncores), .packages = c("MedianaDesigner")) %dorng% { 
+        ADRandSingleCore(parameters)
+      }
+      stopCluster(cl)
 
-    )
+      # Combine the simulation results across the cores 
+
+      collect_n_matrices = NULL
+      collect_traditional_matrices = NULL
+      collect_adaptive_matrices = NULL
+      collect_stage_sample_size_matrices = NULL
+
+      for (i in 1:ncores) {
+
+        collect_n_matrices = rbind(collect_n_matrices, simulation_list[[i]]$n)
+        collect_traditional_matrices = rbind(collect_traditional_matrices, simulation_list[[i]]$traditional)
+        collect_adaptive_matrices = rbind(collect_adaptive_matrices, simulation_list[[i]]$adaptive)
+        collect_stage_sample_size_matrices = rbind(collect_stage_sample_size_matrices, simulation_list[[i]]$stage_sample_size)
+
+      }
+
+      sim_results = list(
+        n = collect_n_matrices,
+        traditional = collect_traditional_matrices,
+        adaptive = collect_adaptive_matrices,
+        stage_sample_size = collect_stage_sample_size_matrices
+      )
+      # nocov end
+    } else {
+
+      sim_results = ADRandSingleCore(parameters)
+
+    }
 
     # Number of models
     n_models = 4
@@ -788,7 +843,7 @@ ADRandReportDoc = function(results) {
     #############################################################################
 
     if (is.null(parameters$withoutCharts)) {   # skip chart generation on tests
-
+      # nocov start
       # Plot candidate dose-response models
 
       width = 6.5
@@ -839,7 +894,7 @@ ADRandReportDoc = function(results) {
 
       item_index = item_index + 1
       figure_index = figure_index + 1
-
+      # nocov end
     }
 
     #############################################################################
@@ -922,3 +977,23 @@ ADRandReportDoc = function(results) {
 }
 # End of ADRandReportDoc
 
+ADRandSingleCore = function(parameters) {
+  
+  single_core_params = parameters
+  single_core_params$nsims = single_core_params$nsims_per_core
+  withCallingHandlers(
+    {        
+      sim_results = ADRandC(single_core_params)
+    },
+    warning = function(c) {
+      # nocov start
+      msg <- conditionMessage(c)
+      if ( grepl("the line search step became smaller than the minimum value allowed", msg, fixed = TRUE) ) {
+        invokeRestart("muffleWarning")
+      }
+      # nocov end
+    }
+  )
+
+  return(sim_results)
+}

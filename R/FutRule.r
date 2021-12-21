@@ -25,6 +25,10 @@ FutRule = function(parameters) {
 
   parameters$random_seed = random_seed
 
+  # Set the seed of R's random number generator.
+  # It also takes effect to Rcpp random generation functions.
+  # https://stackoverflow.com/questions/60119621/get-the-same-sample-of-integers-from-rcpp-as-base-r
+  suppressWarnings(RNGkind(sample.kind = "Rounding"))
   set.seed(random_seed)
 
   if (is.null(parameters$endpoint_type)) stop("Endpoint type (endpoint_type): Value must be specified.", call. = FALSE)
@@ -113,6 +117,30 @@ FutRule = function(parameters) {
   } else {
     parameters$nsims = 1000
   }
+
+  if (!is.null(parameters$ncores)) {
+    # nocov start
+    # Maximum number of cores
+    max_ncores = parallel::detectCores()
+
+    ncores = 
+      ContinuousErrorCheck(parameters$ncores, 
+                           1, 
+                           lower_values = c(1),
+                           lower_values_sign = c(">="),
+                           upper_values = c(max_ncores),
+                           upper_values_sign = c("<="),
+                           "Number of cores for parallel calculations (ncores)",
+                           c("Value"),
+                           "int",
+                           NA) 
+    # nocov end
+  } else {
+    parameters$ncores = 1
+  }
+
+  # Number of simulations per core
+  parameters$nsims_per_core = ceiling(parameters$nsims / parameters$ncores)   
 
   if (!is.null(parameters$alpha)) {
 
@@ -347,7 +375,7 @@ FutRule = function(parameters) {
 
   # Compute sensitivity
 
-  simulations = FutRuleC(parameters)
+  simulations = FutRuleNCores(parameters)
 
   cp = simulations$sim_results  
 
@@ -360,7 +388,7 @@ FutRule = function(parameters) {
   if (endpoint_index == 2) parameters$rates = rep(parameters$control_rate, narms)
   if (endpoint_index == 3) parameters$hazard_rates = log(2) / rep(parameters$control_time, narms)
 
-  simulations = FutRuleC(parameters)
+  simulations = FutRuleNCores(parameters)
 
   cp = simulations$sim_results  
 
@@ -385,7 +413,6 @@ FutRule = function(parameters) {
   class(results) = "FutRuleResults"
 
   return(results)
-
 
 }    
 
@@ -585,7 +612,7 @@ FutRuleReportDoc = function(results) {
   #############################################################################
 
   if (is.null(parameters$withoutCharts)) {   # skip chart generation on tests
-
+    # nocov start
     filename = "sensspec.emf"
 
     emf(file = filename, width = width, height = height, pointsize = pointsize)
@@ -611,13 +638,13 @@ FutRuleReportDoc = function(results) {
 
     item_index = item_index + 1
     figure_index = figure_index + 1
-
+    # nocov end
   }
 
   #############################################################################
 
   if (is.null(parameters$withoutCharts)) {   # skip chart generation on tests
-
+    # nocov start
     filename = "accuracy.emf"
 
     index = which.max(accuracy)
@@ -653,7 +680,7 @@ FutRuleReportDoc = function(results) {
 
     item_index = item_index + 1
     figure_index = figure_index + 1
-
+    # nocov end
   }
 
   #############################################################################
@@ -666,3 +693,50 @@ FutRuleReportDoc = function(results) {
 
 }
 # End of FutRuleReportDoc
+
+FutRuleNCores = function(parameters) {
+
+  # Run simulations on multiple cores to compute key characteristics
+
+  ncores = parameters$ncores
+
+  if (ncores > 1) {
+    # nocov start
+    cl = parallel::makeCluster(ncores)
+
+    # Export all functions in the global environment to each node
+    parallel::clusterExport(cl, ls(envir = .GlobalEnv))
+
+    doParallel::registerDoParallel(cl)
+    simulation_list = foreach(counter=(1:ncores), .packages = c("MedianaDesigner")) %dorng% { 
+      FutRuleSingleCore(parameters)
+    }
+    stopCluster(cl)
+
+    # Combine the simulation results across the cores 
+
+    sim_results = NULL
+
+    for (i in 1:ncores) {
+
+      sim_results = rbind(sim_results, simulation_list[[i]]$sim_results)
+
+    }
+
+    simulations = list(sim_results = sim_results)
+    # nocov end
+  } else {
+
+    simulations = FutRuleSingleCore(parameters)
+
+  }
+
+  return(simulations)
+}
+
+FutRuleSingleCore = function(parameters) {
+  params_for_core = parameters
+  params_for_core$nsims = params_for_core$nsims_per_core
+  simulations = FutRuleC(params_for_core)
+  return(simulations)
+}

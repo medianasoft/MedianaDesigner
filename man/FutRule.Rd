@@ -1,6 +1,7 @@
 \name{FutRule}
 \alias{FutRule}
 \alias{FutRuleC}
+\alias{FutRuleSingleCore}
 \title{
 Simulation-based selection of an optimal futility stopping rule at an interim analysis
 }
@@ -38,6 +39,7 @@ FutRule(parameters)
     \item \code{alpha}{: Numeric value defining the overall one-sided Type I error rate. The default value is 0.025.}
     \item \code{random_seed}{: Integer value defining the random number generator seed. The default value is 49283.}
     \item \code{nsims}{: Integer value defining the number of simulation runs.}
+    \item \code{ncores}{: Integer value defining the number of cores for parallel calculations. The number of cores cannot exceed the maximum available number of cores. The default value is 1.} 
     }
   }
 }

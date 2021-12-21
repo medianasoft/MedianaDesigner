@@ -28,3 +28,7 @@ Added the following features:
 2021-10-25 Version 0.6
 Added the following feature:
 - Explicit specification of the random seed for pseudorandom number generation.
+
+2021-12-20 Version 0.7
+Added the following feature:
+- Enabled parallel calculations in all modules.

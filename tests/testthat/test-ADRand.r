@@ -1,3 +1,6 @@
+commonNSim = 100
+isTestMultiCore = FALSE
+
 #####################################
 
 # List of all parameters.
@@ -53,7 +56,7 @@ normalCase <- list(
   # One-sided Type I error rate
   alpha = 0.025,
   # Number of simulations
-  nsims = 100
+  nsims = commonNSim
 
 )
 
@@ -61,29 +64,17 @@ normalCase <- list(
 
 context("ADRand - Success runs")
 
-test_that("Success run ADRand with Normal case", {  
+checkExpectationsForNormalCase = function(res) {
+  expect_s3_class(res, "ADRandResults")
 
-  # Set the seed of R‘s random number generator.
-  # It also takes effect to Rcpp randome generation functions.
-  # https://stackoverflow.com/questions/60119621/get-the-same-sample-of-integers-from-rcpp-as-base-r
-  suppressWarnings(RNGkind(sample.kind = "Rounding"))
-  set.seed(5)
-
-  parameters = normalCase
-  # Skip chart generation in tests
-  parameters$withoutCharts = TRUE
-
-  # Run simulations
-  results = ADRand(parameters)
-
-  expect_is(results, "ADRandResults")
-  expect_equal(length(results), 2)
-  expect_equal(length(results$parameters), length(normalCase)+10)
-  expect_equal(length(results$sim_results), 5)
+  expect_length(res, 2)
+  expect_length(res$sim_results, 5)
   
   # Calculate summary
-  parameters = results$parameters
-  simulations = results$sim_results
+  parameters = res$parameters
+  simulations = res$sim_results
+
+  # print(simulations$n)
 
   # - ComparisonOfTraditionalAndAdaptiveDesigns -----------------------------------------
   rowMax = function(x) {
@@ -110,6 +101,20 @@ test_that("Success run ADRand with Normal case", {
     tolerance=10
   )
   # -------------------------------------------------------------------------------------
+}
+
+test_that("Success run ADRand with Normal case (single core)", {  
+
+  parameters = normalCase
+  # Run once with random_seed parameter
+  parameters$random_seed = 49283
+  # Skip chart generation in tests
+  parameters$withoutCharts = TRUE
+
+  # Run simulations
+  results = ADRand(parameters)
+  checkExpectationsForNormalCase(results)
+  expect_length(results$parameters, length(normalCase)+12)
 
   # Create a simulation report
   temp_file = tempfile("Simulation report.docx", fileext=".docx")
@@ -121,6 +126,19 @@ test_that("Success run ADRand with Normal case", {
   ADRandReportDoc(results)
   GenerateReport(results, tempfile(fileext = ".docx"))
 })
+
+if (isTestMultiCore) {
+  test_that("Success run ADRand with Normal case (two cores)", {  
+    parameters = normalCase
+    parameters$ncores = 2
+    # Skip chart generation in tests
+    parameters$withoutCharts = TRUE
+
+    # Run simulations
+    results = ADRand(parameters)
+    checkExpectationsForNormalCase(results)
+  })
+}
 
 test_that("Success run ADRand with Normal case with insignificant changes", {  
   # Remove parameters that accepts default value
@@ -149,7 +167,6 @@ test_that("Success run ADRand with Normal case with changed direction", {
   results = ADRand(changedNormalCase)
   expect_is(results, "ADRandResults")
   expect_equal(length(results), 2)
-  expect_equal(length(results$parameters), length(normalCase)+9)
   expect_equal(length(results$sim_results), 5)
 
   # TODO: Check result

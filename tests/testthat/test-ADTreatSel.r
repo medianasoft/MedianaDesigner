@@ -1,4 +1,5 @@
-# Test the input of the ADTreatSel function
+commonNSim = 100
+isTestMultiCore = FALSE
 
 # Normal case parameters
 normalCase = list(
@@ -43,7 +44,7 @@ normalCase = list(
   alpha = 0.025,
 
   # Number of simulations
-  nsims = 1000
+  nsims = commonNSim
 )
 
 # Binary case parameters
@@ -84,7 +85,43 @@ binaryCase = list(
   alpha = 0.025,
 
   # Number of simulations
-  nsims = 1000
+  nsims = commonNSim
+)
+
+binaryCase2 = list(
+
+  # Endpoint type
+  endpoint_type = "Binary",
+
+  # Number of enrolled patients (placebo and four regimens)
+  sample_size = c(90, 90, 90, 90, 90),
+
+  # Response rate in the control arm 
+  control_rate = 0.1,
+
+  # Response rates in the regimen arms 
+  treatment_rate = c(0.30, 0.30, 0.35, 0.35),
+
+  # Information fractions at Interim analysis 1, Interim analysis 2, Final analysis
+  info_frac = c(0.2, 0.5, 1),
+
+  # Futility threshold for conditional power at Interim analysis 1
+  futility_threshold = 0.3,
+
+  # Patient dropout rate at the end of the 26-week treatment period
+  dropout_rate = 0.15,
+
+  # Number of treatments to be selected at the second interim analysis
+  treatment_count = 1,
+
+  # Multiple testing procedure to be used in the trial
+  mult_test = "Hochberg",
+
+  # One-sided alpha level
+  alpha = 0.025,
+
+  # Number of simulations
+  nsims = commonNSim
 )
 
 # Time-to-event case parameters
@@ -134,18 +171,40 @@ timeToEventCase = list(
   alpha = 0.025,
 
   # Number of simulations
-  nsims = 1000
+  nsims = commonNSim
 )
 
 context("ADTreatSel - Success runs")
 
-test_that("Success run ADTreatSel with Normal case", {
+checkExpectationsForNormalCase = function(results) {
+  expect_s3_class(results, "ADTreatSelResults")
 
-  # Set the seed of R‘s random number generator.
-  # It also takes effect to Rcpp randome generation functions.
-  # https://stackoverflow.com/questions/60119621/get-the-same-sample-of-integers-from-rcpp-as-base-r
-  suppressWarnings(RNGkind(sample.kind = "Rounding"))
-  set.seed(5)
+  expect_type(  results$sim_results, "double")
+  expect_length(results$sim_results, 7 * results$parameters$nsims)
+  
+  sim_summary = results$sim_summary
+  # print(sim_summary)
+  expect_type(    sim_summary, "list")
+  expect_equal(   sim_summary$ad_power, 0.641, tolerance=0.1)
+  expect_equal(   sim_summary$overall_futility, 0.076, tolerance=0.1)
+  
+  expect_is(      sim_summary$select, "numeric")
+  expect_length(  sim_summary$select, 2)
+  expect_equal(unname(sim_summary$select[1]), 0.453, tolerance=0.1)
+  expect_equal(unname(sim_summary$select[2]), 0.453, tolerance=0.1)
+
+  expect_is(      sim_summary$futility, "numeric")
+  expect_length(  sim_summary$futility, 2)
+  expect_equal(unname(sim_summary$futility[1]), 0.190, tolerance=0.1)
+  expect_equal(unname(sim_summary$futility[2]), 0.186, tolerance=0.1)
+
+  expect_is(      sim_summary$trad_power, "numeric")
+  expect_length(  sim_summary$trad_power, 2)
+  expect_equal(unname(sim_summary$trad_power[1]), 0.596, tolerance=0.1)
+  expect_equal(unname(sim_summary$trad_power[2]), 0.586, tolerance=0.1)
+}
+
+test_that("Success run ADTreatSel with Normal case (single core)", {
 
   # Success run
   results = ADTreatSel(
@@ -163,37 +222,29 @@ test_that("Success run ADTreatSel with Normal case", {
       mult_test = normalCase$mult_test,
       # use default
       #dropout_rate = normalCase$dropout_rate,
-      alpha = normalCase$alpha #,
+      alpha = normalCase$alpha,
       # use default
       #nsims = normalCase$nsims
+
+      # Run one with random seek value
+      random_seed = 49283
     )
   )
-  expect_is(results, "ADTreatSelResults")
-  expect_type(  results$sim_results, "double")
-  expect_length(results$sim_results, 7000)
-  
-  expect_type(    results$sim_summary, "list")
-  expect_true(abs(results$sim_summary$ad_power - 0.5) < 0.3)
-  expect_true(abs(results$sim_summary$overall_futility - 0.1) < 0.1)
-  
-  expect_is(      results$sim_summary$select, "numeric")
-  expect_length(  results$sim_summary$select, 2)
-  expect_true(abs(results$sim_summary$select[1] - 0.4) < 0.1)
-  expect_true(abs(results$sim_summary$select[2] - 0.4) < 0.1)
-
-  expect_is(      results$sim_summary$futility, "numeric")
-  expect_length(  results$sim_summary$futility, 2)
-  expect_true(abs(results$sim_summary$futility[1] - 0.2) < 0.1)
-  expect_true(abs(results$sim_summary$futility[2] - 0.2) < 0.1)
-
-  expect_is(      results$sim_summary$trad_power, "numeric")
-  expect_length(  results$sim_summary$trad_power, 2)
-  expect_true(abs(results$sim_summary$trad_power[1] - 0.5) < 0.2)
-  expect_true(abs(results$sim_summary$trad_power[2] - 0.5) < 0.2)
+  checkExpectationsForNormalCase(results)
 
   # Check for report generation
   ADTreatSelReportDoc(results)
 })
+
+if (isTestMultiCore) {
+  test_that("Success run ADTreatSel with Normal case (two cores)", {
+    # Success run
+    params = normalCase
+    params$ncores = 2
+    results = ADTreatSel(params)
+    checkExpectationsForNormalCase(results)
+  })
+}
 
 test_that("Success run ADTreatSel with Binary case", {
 
@@ -216,7 +267,7 @@ test_that("Success run ADTreatSel with Binary case", {
   )
   expect_is(results, "ADTreatSelResults")
   expect_type(  results$sim_results, "double")
-  expect_length(results$sim_results, 10000)
+  expect_length(results$sim_results, 10 * binaryCase$nsims)
   
   expect_type(    results$sim_summary, "list")
   expect_true(abs(results$sim_summary$ad_power - 0.8) < 0.2)
@@ -244,13 +295,65 @@ test_that("Success run ADTreatSel with Binary case", {
   ADTreatSelReportDoc(results)
 })
 
+checkExpectationsForBinaryCase2 = function(res) {
+  expect_s3_class(res, "ADTreatSelResults")
+
+  # check sim_results
+  expect_length(res$sim_results, 1300)
+  # check sim_summary
+  expect_equal(res$sim_summary$ad_power, 0.9175, tolerance=0.1)
+  expect_equal(res$sim_summary$overall_futility, 0.0179, tolerance=0.1)
+
+  expect_equal(unname(res$sim_summary$trad_power[1]), 0.7133, tolerance=0.1)
+  expect_equal(unname(res$sim_summary$trad_power[2]), 0.7175, tolerance=0.1)
+  expect_equal(unname(res$sim_summary$trad_power[3]), 0.8435, tolerance=0.1)
+  expect_equal(unname(res$sim_summary$trad_power[4]), 0.8375, tolerance=0.1)
+
+  expect_equal(unname(res$sim_summary$select[1]), 0.1612, tolerance=0.1)
+  expect_equal(unname(res$sim_summary$select[2]), 0.1639, tolerance=0.1)
+  expect_equal(unname(res$sim_summary$select[3]), 0.3867, tolerance=0.1)
+  expect_equal(unname(res$sim_summary$select[4]), 0.3801, tolerance=0.1)
+
+  expect_equal(unname(res$sim_summary$futility[1]), 0.2326, tolerance=0.1)
+  expect_equal(unname(res$sim_summary$futility[2]), 0.2253, tolerance=0.1)
+  expect_equal(unname(res$sim_summary$futility[3]), 0.1424, tolerance=0.1)
+  expect_equal(unname(res$sim_summary$futility[4]), 0.1468, tolerance=0.1)
+}
+
+test_that("Success run ADTreatSel with Binary case 2 (one core)", {
+  
+  # Success run
+  params = binaryCase2
+  params$sims = 100
+  # params$ncores = 1
+  res = ADTreatSel(params)
+  checkExpectationsForBinaryCase2(res)
+
+  # print for debug
+  # print(class(res))
+  # class(res) = "Result"
+  # print(res)
+
+})
+
+test_that("Success run ADTreatSel with Binary case 2 (two cores)", {
+  
+  # Success run
+  params = binaryCase2
+  params$sims = 100
+  params$ncores = 2
+  res = ADTreatSel(params)
+  checkExpectationsForBinaryCase2(res)
+
+})
+
 test_that("Success run ADTreatSel with Time-to-event case", {
 
   # Success run
   results = ADTreatSel(timeToEventCase)
   expect_is(results, "ADTreatSelResults")
   expect_type(  results$sim_results, "double")
-  expect_length(results$sim_results, 7000)
+  expect_length(results$sim_results, 7 * timeToEventCase$nsims)
   
   expect_type(    results$sim_summary, "list")
   expect_true(abs(results$sim_summary$ad_power - 0.8) < 0.2)
@@ -299,7 +402,7 @@ test_that("Success run ADTreatSel with Normal case and short sample_size vector"
 
   expect_is(results, "ADTreatSelResults")
   expect_type(  results$sim_results, "double")
-  expect_length(results$sim_results, 4000)
+  expect_length(results$sim_results, 4 * normalCase$nsims)
   
   expect_type(    results$sim_summary, "list")
   expect_true(abs(results$sim_summary$ad_power - 0.5) < 0.3)
@@ -347,7 +450,7 @@ test_that("Success run ADTreatSel with Lower direction", {
 
   expect_is(results, "ADTreatSelResults")
   expect_type(  results$sim_results, "double")
-  expect_length(results$sim_results, 7000)
+  expect_length(results$sim_results, 7 * normalCase$nsims)
   
   expect_type(    results$sim_summary, "list")
   expect_is(      results$sim_summary$select, "numeric")

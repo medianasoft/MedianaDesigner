@@ -1,4 +1,5 @@
-# Test the input of the ADSSMod function
+commonNSim = 100
+isTestMultiCore = FALSE
 
 # Normal case parameters
 normalCase = list(
@@ -40,7 +41,7 @@ normalCase = list(
   alpha = 0.025,
 
   # Number of simulations
-  nsims = 100
+  nsims = commonNSim
 )
 
 # Binary case parameters
@@ -82,7 +83,7 @@ binaryCase = list(
   alpha = 0.025,
 
   # Number of simulations
-  nsims = 100
+  nsims = commonNSim
 )
 
 # Time-to-event case parameters
@@ -133,18 +134,32 @@ timeToEventCase = list(
   alpha = 0.025,
 
   # Number of simulations
-  nsims = 100
+  nsims = commonNSim
 )
 
 context("ADSSMod - Success runs")
 
-test_that("Success run ADSSMod with Normal case", {
+checkExpectationsForNormalCase = function(results) {
+  expect_s3_class(results, "ADSSModResults")
 
-  # Set the seed of R‘s random number generator.
-  # It also takes effect to Rcpp randome generation functions.
-  # https://stackoverflow.com/questions/60119621/get-the-same-sample-of-integers-from-rcpp-as-base-r
-  suppressWarnings(RNGkind(sample.kind = "Rounding"))
-  set.seed(5)
+  expect_type(results$sim_results, "double")
+  expect_length(results$sim_results, 19000)
+
+  sim_summary = results$sim_summary
+  # print(sim_summary)
+  expect_type(sim_summary, "list")
+  expect_equal(sim_summary$futility, 0.19, tolerance=0.1)
+  expect_equal(sim_summary$increase, 0.199, tolerance=0.1)
+  expect_equal(sim_summary$ad_power, 0.628, tolerance=0.1)
+  expect_equal(sim_summary$ad_under, 0.227, tolerance=0.1)
+  expect_equal(sim_summary$ad_prom, 0.849, tolerance=0.1)
+  expect_equal(sim_summary$ad_over, 0.96, tolerance=0.1)
+  expect_equal(sim_summary$trad_under, 0.227, tolerance=0.1)
+  expect_equal(sim_summary$trad_prom, 0.718, tolerance=0.1)
+  expect_equal(sim_summary$trad_over, 0.960, tolerance=0.1)
+}
+
+test_that("Success run ADSSMod with Normal case (single core)", {
 
   # Success run with check default values
   results = ADSSMod(
@@ -160,29 +175,32 @@ test_that("Success run ADSSMod with Normal case", {
 	    info_frac          = normalCase$info_frac,
 	    futility_threshold = normalCase$futility_threshold,
 	    promising_interval = normalCase$promising_interval,
-	    target_power       = normalCase$target_power #,
+	    target_power       = normalCase$target_power,
 	    # check defaults:
 	    #alpha              = normalCase$alpha,
 	    #nsims              = normalCase$nsims
+
+      # Run once with random seek
+      random_seed = 49283
 	  )
 	)
-  expect_type(results$sim_results, "double")
-  expect_type(results$sim_summary, "list")
-  expect_length(results$sim_results, 19000)
-  expect_true(abs(results$sim_summary$futility - 0.2) < 0.2)
-  expect_true(abs(results$sim_summary$increase - 0.2) < 0.2)
-  expect_true(abs(results$sim_summary$ad_power - 0.5) < 0.3)
-  expect_true(abs(results$sim_summary$ad_under - 0.2) < 0.2)
-  expect_true(abs(results$sim_summary$ad_prom - 0.8) < 0.2)
-  expect_true(abs(results$sim_summary$ad_over - 0.9) < 0.1)
-  expect_true(abs(results$sim_summary$trad_under - 0.2) < 0.2)
-  expect_true(abs(results$sim_summary$trad_prom - 0.7) < 0.3)
-  expect_true(abs(results$sim_summary$trad_over - 0.9) < 0.1)
+  checkExpectationsForNormalCase(results)
 
   # Check for report generation
   ADSSModReportDoc(results)
   GenerateReport(results, tempfile(fileext = ".docx"))
 })
+
+if (isTestMultiCore) {
+  test_that("Success run ADSSMod with Normal case (two cores)", {
+    # Success run with check default values
+    params = normalCase
+    params$ncores = 2
+    params$nsims = 1000
+    results = ADSSMod(params)
+    checkExpectationsForNormalCase(results)
+  })
+}
 
 test_that("Success run ADSSMod with Binary case", {
 

@@ -1,4 +1,5 @@
-# Test the input of the ADPopSel function
+commonNSim = 100
+isTestMultiCore = FALSE
 
 # Normal case parameters
 normalCase = list(
@@ -43,7 +44,7 @@ normalCase = list(
   alpha = 0.025,
 
   # Number of simulations
-  nsims = 1000
+  nsims = commonNSim
 )
 
 # Binary case parameters
@@ -87,7 +88,7 @@ binaryCase = list(
   alpha = 0.025,
 
   # Number of simulations
-  nsims = 1000
+  nsims = commonNSim
 )
 
 # Time-to-event case parameters
@@ -140,18 +141,49 @@ timeToEventCase = list(
   alpha = 0.025,
 
   # Number of simulations
-  nsims = 1000
+  nsims = commonNSim
 )
 
 context("ADPopSel - Success runs")
 
-test_that("Success run ADPopSel with Normal case", {
+checkExpectationsForNormalCase = function(results) {
+  expect_s3_class(results, "ADPopSelResults")
 
-  # Set the seed of R‘s random number generator.
-  # It also takes effect to Rcpp randome generation functions.
-  # https://stackoverflow.com/questions/60119621/get-the-same-sample-of-integers-from-rcpp-as-base-r
-  suppressWarnings(RNGkind(sample.kind = "Rounding"))
-  set.seed(5)
+  expect_type(  results$sim_results, "double")
+  expect_length(results$sim_results, 15 * results$parameters$nsims)
+  
+  sim_summary = results$sim_summary
+  # print(sim_summary)
+
+  expect_type(sim_summary, "list")
+  expect_equal(sim_summary$futility, 0.209, tolerance=0.1)
+  
+  expect_is(    sim_summary$trad_power, "numeric")
+  expect_length(sim_summary$trad_power, 2)
+  expect_equal( unname(sim_summary$trad_power[1]), 0.541, tolerance=0.1)
+  expect_equal( unname(sim_summary$trad_power[2]), 0.463, tolerance=0.1)
+
+  expect_is(    sim_summary$ad_power, "numeric")
+  expect_length(sim_summary$ad_power, 3)
+  expect_equal( unname(sim_summary$ad_power[1]), 0.458, tolerance=0.1)
+  expect_equal( unname(sim_summary$ad_power[2]), 0.330, tolerance=0.1)
+  expect_equal( unname(sim_summary$ad_power[3]), 0.483, tolerance=0.1)
+
+  expect_is(    sim_summary$hypothesis_selection, "numeric")
+  expect_length(sim_summary$hypothesis_selection, 3)
+  expect_equal( unname(sim_summary$hypothesis_selection[1]), 0.332, tolerance=0.1)
+  expect_equal( unname(sim_summary$hypothesis_selection[2]), 0.323, tolerance=0.1)
+  expect_equal( unname(sim_summary$hypothesis_selection[3]), 0.345, tolerance=0.1)
+
+  expect_is(    sim_summary$look_time, "numeric")
+  expect_length(sim_summary$look_time, 4)
+  expect_equal( unname(sim_summary$look_time[1]), 0, tolerance=0.1)
+  expect_equal( unname(sim_summary$look_time[2]), 0, tolerance=0.1)
+  expect_true(is.nan(results$sim_summary$look_time[3]))
+  expect_true(is.nan(results$sim_summary$look_time[4]))
+}
+
+test_that("Success run ADPopSel with Normal case (single core)", {
 
   # Success run
   results = ADPopSel(
@@ -166,51 +198,34 @@ test_that("Success run ADPopSel with Normal case", {
         info_frac = normalCase$info_frac,
         futility_threshold = normalCase$futility_threshold,
         influence = normalCase$influence,
-        interaction = normalCase$interaction#,
+        interaction = normalCase$interaction,
         # missing, use default 0
         #dropout_rate = normalCase$dropout_rate,
         # missing, use default 0.025
         #alpha = normalCase$alpha,
         # missing, use default 1000
         #nsims = 1000 # normalCase$nsims
+
+        # Run once with random seed
+        random_seed = 49283
     )
   )
-  expect_is(results, "ADPopSelResults")
-
-  expect_type(  results$sim_results, "double")
-  expect_length(results$sim_results, 15000)
-  
-  expect_type(    results$sim_summary, "list")
-  expect_true(abs(results$sim_summary$futility - 0.2) < 0.2)
-  
-  expect_is(      results$sim_summary$trad_power, "numeric")
-  expect_length(  results$sim_summary$trad_power, 2)
-  expect_true(abs(results$sim_summary$trad_power[1] - 0.52) < 0.1)
-  expect_true(abs(results$sim_summary$trad_power[2] - 0.43) < 0.1)
-
-  expect_is(      results$sim_summary$ad_power, "numeric")
-  expect_length(  results$sim_summary$ad_power, 3)
-  expect_true(abs(results$sim_summary$ad_power[1] - 0.45) < 0.1)
-  expect_true(abs(results$sim_summary$ad_power[2] - 0.32) < 0.1)
-  expect_true(abs(results$sim_summary$ad_power[3] - 0.46) < 0.1)
-
-  expect_is(      results$sim_summary$hypothesis_selection, "numeric")
-  expect_length(  results$sim_summary$hypothesis_selection, 3)
-  expect_true(abs(results$sim_summary$hypothesis_selection[1] - 0.31) < 0.1)
-  expect_true(abs(results$sim_summary$hypothesis_selection[2] - 0.32) < 0.1)
-  expect_true(abs(results$sim_summary$hypothesis_selection[3] - 0.35) < 0.1)
-
-  expect_is(      results$sim_summary$look_time, "numeric")
-  expect_length(  results$sim_summary$look_time, 4)
-  expect_true(abs(results$sim_summary$look_time[1] - 0) < 0.1)
-  expect_true(abs(results$sim_summary$look_time[2] - 0) < 0.1)
-  expect_true(is.nan(results$sim_summary$look_time[3]))
-  expect_true(is.nan(results$sim_summary$look_time[4]))
+  checkExpectationsForNormalCase(results)
 
   # Check for report generation
   ADPopSelReportDoc(results)
   GenerateReport(results, tempfile(fileext = ".docx"))
 })
+
+if (isTestMultiCore) {
+  test_that("Success run ADPopSel with Normal case (two cores)", {
+    # Success run
+    params_for_run = normalCase
+    params_for_run$ncores = 2
+    results = ADPopSel(params_for_run)
+    checkExpectationsForNormalCase(results)
+  })
+}
 
 test_that("Success run ADPopSel with direction Lower", {
   # Check for non-fail Lower direction success
@@ -275,7 +290,7 @@ test_that("Success run ADPopSel with Binary case", {
   expect_is(results, "ADPopSelResults")
 
   expect_type(  results$sim_results, "double")
-  expect_length(results$sim_results, 15000)
+  expect_length(results$sim_results, 15 * binaryCase$nsims)
 
   expect_type(    results$sim_summary, "list")
   expect_true(abs(results$sim_summary$futility - 0.05) < 0.1)
@@ -331,7 +346,7 @@ test_that("Success run ADPopSel with Time-to-event case", {
   expect_is(results, "ADPopSelResults")
 
   expect_type(  results$sim_results, "double")
-  expect_length(results$sim_results, 15000)
+  expect_length(results$sim_results, 15 * timeToEventCase$nsims)
   
   expect_type(    results$sim_summary, "list")
   expect_true(abs(results$sim_summary$futility - 0.16) < 0.1)

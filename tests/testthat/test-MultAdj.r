@@ -1,4 +1,5 @@
-commonNSim = 25
+commonNSim = 100
+isTestMultiCore = FALSE
 
 ################################################
 
@@ -290,35 +291,55 @@ parametersCase3B = list(
 
 context("MultAdj - Success runs")
 
-test_that("Success run MultAdj with Case 1A", {  
-  
-    # Set the seed of R‘s random number generator.
-  # It also takes effect to Rcpp randome generation functions.
-  # https://stackoverflow.com/questions/60119621/get-the-same-sample-of-integers-from-rcpp-as-base-r
-  suppressWarnings(RNGkind(sample.kind = "Rounding"))
-  set.seed(5)
+checkExpectationsForCase1A = function(results) {
+  expect_s3_class(results, "MultAdjResults")
+  expect_named(results, c("parameters", "sim_results", "sim_summary"))
 
-  # Run simulations
-  results = MultAdj(parametersCase1A)
-  expect_is(results, "MultAdjResults")
+  expect_equal(nrow(results$sim_results), results$parameters$nsims)
 
   sim_summary = results$sim_summary
+  # print(sim_summary)
+  expect_named(sim_summary, c('power', 'adj_power', 'disj_power', 'conj_power'))
   expect_length(sim_summary, 4)
   expect_length(sim_summary$power, 2)
   expect_length(sim_summary$adj_power, 2)
 
-  expect_equal(unname(sim_summary$power[1]), 0.4, tolerance = 0.4)
-  expect_equal(unname(sim_summary$power[2]), 0.6, tolerance = 0.3)
-  expect_equal(unname(sim_summary$adj_power[1]), 0.3, tolerance = 0.3)
-  expect_equal(unname(sim_summary$adj_power[2]), 0.6, tolerance = 0.3)
-  expect_equal(unname(sim_summary$disj_power), 0.6, tolerance = 0.3)
-  expect_equal(unname(sim_summary$conj_power), 0.3, tolerance = 0.3)
+  expect_equal(unname(sim_summary$power[1]), 0.43, tolerance = 0.1)
+  expect_equal(unname(sim_summary$power[2]), 0.73, tolerance = 0.1)
+  expect_equal(unname(sim_summary$adj_power[1]), 0.29, tolerance = 0.1)
+  expect_equal(unname(sim_summary$adj_power[2]), 0.68, tolerance = 0.1)
+  expect_equal(unname(sim_summary$disj_power), 0.72, tolerance = 0.1)
+  expect_equal(unname(sim_summary$conj_power), 0.25, tolerance = 0.1)
+}
+
+test_that("Success run MultAdj with Case 1A (single core)", {  
+
+  # Run simulations
+  params = parametersCase1A
+  # First run with random seed
+  params$random_seed = 49283
+
+  results = MultAdj(params)
+  checkExpectationsForCase1A(results)
 
   # Check for report generation
   GenerateReport(results, tempfile(fileext = ".docx"))
 })
 
+if (isTestMultiCore) {
+  test_that("Success run MultAdj with Case 1A (two cores)", {  
+    # Run simulations
+    params = parametersCase1A
+    params$ncores = 2
+    results = MultAdj(params)
+    checkExpectationsForCase1A(results)
+  })
+}
+
 test_that("Success run MultAdj with Case 1B", {  
+
+  # cat("\nTest Case 1B: begin...\n")
+
   # Run simulations
   results = MultAdj(parametersCase1B)
   expect_is(results, "MultAdjResults")
@@ -336,25 +357,56 @@ test_that("Success run MultAdj with Case 1B", {
   expect_equal(unname(sim_summary$disj_power), 1.0, tolerance = 0.3)
   expect_equal(unname(sim_summary$conj_power), 0.4, tolerance = 0.3)
 
+  # cat("\nTest Case 1B: done.\n")
+
   # Check for report generation
   GenerateReport(results, tempfile(fileext = ".docx"))
 })
 
-test_that("Success run MultAdj with Case 2A", {  
-  # Run simulations
-  results = MultAdj(parametersCase2A)
-  expect_is(results, "MultAdjResults")
+checkExpectationsForCase2A = function(results) {
+  expect_s3_class(results, "MultAdjResults")
+  expect_named(results, c("parameters", "sim_results", "sim_summary"))
+
+  expect_equal(nrow(results$sim_results), results$parameters$nsims)
 
   sim_summary = results$sim_summary
+  # print(sim_summary)
+  expect_named(sim_summary, c('power', 'adj_power'))
   expect_length(sim_summary, 2)
   expect_length(sim_summary$power, 2)
-  expect_equal(unname(sim_summary$power[1]), 0.4, tolerance = 0.4)
-  expect_equal(unname(sim_summary$power[2]), 0.6, tolerance = 0.4)
-  expect_equal(unname(sim_summary$adj_power), 0.6, tolerance = 0.4)
+  expect_equal(unname(sim_summary$power[1]), 0.43, tolerance = 0.1)
+  expect_equal(unname(sim_summary$power[2]), 0.62, tolerance = 0.1)
+  expect_equal(unname(sim_summary$adj_power), 0.67, tolerance = 0.1)
+}
+
+test_that("Success run MultAdj with Case 2A (single core)", {  
+
+  # cat("\nTest Case 2A: begin...\n")
+
+  # Run simulations
+  results = MultAdj(parametersCase2A)
+  checkExpectationsForCase2A(results)
+
+  # cat("\nTest Case 2A: done.\n")
 
   # Check for report generation
   GenerateReport(results, tempfile(fileext = ".docx"))
 })
+
+if (isTestMultiCore) {
+  test_that("Success run MultAdj with Case 2A (two cores)", {  
+
+    # cat("\nTest Case 2A-two: begin...\n")
+
+    parameters = parametersCase2A
+    parameters$ncores = 2
+    # Run simulations
+    results = MultAdj(parameters)
+    checkExpectationsForCase2A(results)
+
+    # cat("\nTest Case 2A-two: done.\n")
+  })
+}
 
 test_that("Success run MultAdj with Case 2B", {  
   # Run simulations
@@ -378,25 +430,54 @@ test_that("Success run MultAdj with Case 2B", {
   GenerateReport(results, tempfile(fileext = ".docx"))
 })
 
-test_that("Success run MultAdj with Case 3A", {  
-  # Run simulations
-  results = MultAdj(parametersCase3A)
-  expect_is(results, "MultAdjResults")
+checkExpectationsForCase3A = function(results) {
+  expect_s3_class(results, "MultAdjResults")
+  expect_named(results, c("parameters", "sim_results", "sim_summary"))
+
+  expect_equal(nrow(results$sim_results), results$parameters$nsims)
 
   sim_summary = results$sim_summary
+  # print(sim_summary)
+  expect_named(sim_summary, c('power', 'adj_power', 'disj_power', 'conj_power'))
   expect_length(sim_summary, 4)
   expect_length(sim_summary$power, 6)
   expect_length(sim_summary$adj_power, 6)
   expect_length(sim_summary$disj_power, 3)
   expect_length(sim_summary$conj_power, 3)
-  expect_equal(sum(sim_summary$power), 3.3, tolerance = 1.0)
-  expect_equal(sum(sim_summary$adj_power), 1.0, tolerance = 1.0)
-  expect_equal(sum(sim_summary$disj_power), 0.8, tolerance = 0.8)
+  expect_equal(sum(sim_summary$power), 3.3, tolerance = 0.1)
+  expect_equal(sum(sim_summary$adj_power), 0.8, tolerance = 0.2)
+  expect_equal(sum(sim_summary$disj_power), 0.7, tolerance = 0.2)
   expect_equal(sum(sim_summary$conj_power)/3, 0.1, tolerance = 0.1)
+}
+
+test_that("Success run MultAdj with Case 3A (single core)", {
+
+  # cat("\nTest Case 3A: begin...\n")
+
+  # Run simulations
+  results = MultAdj(parametersCase3A)
+  checkExpectationsForCase3A(results)
+
+  # cat("\nTest Case 3A: done.\n")
 
   # Check for report generation
   GenerateReport(results, tempfile(fileext = ".docx"))
 })
+
+if (isTestMultiCore) {
+  test_that("Success run MultAdj with Case 3A (two cores)", {
+
+    # cat("\nTest Case 3A-two: begin...\n")
+
+    # Run simulations
+    parameters = parametersCase3A
+    parameters$ncores = 2
+    results = MultAdj(parameters)
+    checkExpectationsForCase3A(results)
+
+    # cat("\nTest Case 3A-two: done.\n")
+  })
+}
 
 test_that("Success run MultAdj with Case 3B", {  
   # Run simulations

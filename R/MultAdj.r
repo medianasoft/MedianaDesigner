@@ -25,6 +25,10 @@ MultAdj = function(parameters) {
 
   parameters$random_seed = random_seed
 
+  # Set the seed of R's random number generator.
+  # It also takes effect to Rcpp random generation functions.
+  # https://stackoverflow.com/questions/60119621/get-the-same-sample-of-integers-from-rcpp-as-base-r
+  suppressWarnings(RNGkind(sample.kind = "Rounding"))
   set.seed(random_seed)
   
   if (is.null(parameters$endpoint_type)) stop("Endpoint type (endpoint_type): Value must be specified.", call. = FALSE)
@@ -126,6 +130,30 @@ MultAdj = function(parameters) {
                           c("Value"),
                           "int",
                           NA) 
+
+  if (!is.null(parameters$ncores)) {
+    # nocov start
+    # Maximum number of cores
+    max_ncores = parallel::detectCores()
+
+    ncores = 
+      ContinuousErrorCheck(parameters$ncores, 
+                           1, 
+                           lower_values = c(1),
+                           lower_values_sign = c(">="),
+                           upper_values = c(max_ncores),
+                           upper_values_sign = c("<="),
+                           "Number of cores for parallel calculations (ncores)",
+                           c("Value"),
+                           "int",
+                           NA) 
+    # nocov end
+  } else {
+    parameters$ncores = 1
+  }
+
+  # Number of simulations per core
+  parameters$nsims_per_core = ceiling(parameters$nsims / parameters$ncores)   
 
   if (is.null(parameters$alpha)) {
     parameters$alpha = 0.025
@@ -544,7 +572,7 @@ MultAdj = function(parameters) {
   # Analysis of multiple treatment-control comparisons
   if (parameters$mult_test_type == 1) {
 
-    simulations = MultAdjC1(parameters)
+    simulations = MultAdj1NCores(parameters)
 
     sim_results = simulations$sim_results
 
@@ -580,7 +608,7 @@ MultAdj = function(parameters) {
   # Analysis of multiple endpoints
   if (parameters$mult_test_type == 2) {
 
-    simulations = MultAdjC2(parameters)
+    simulations = MultAdj2NCores(parameters)
 
     sim_results = simulations$sim_results
 
@@ -628,7 +656,7 @@ MultAdj = function(parameters) {
   # Analysis of multiple treatment-control comparisons and multiple endpoints
   if (parameters$mult_test_type == 3) {
 
-    simulations = MultAdjC3(parameters)
+    simulations = MultAdj3NCores(parameters)
 
     sim_results = simulations$sim_results
 
@@ -1251,8 +1279,134 @@ MultAdjReportDoc = function(results) {
 }
 # End of MultAdjReportDoc
 
-# print.MultAdjResults = function (results) {
+# --==[ MultAdj1 ]==--
+MultAdj1NCores = function(parameters) {
+  ncores = parameters$ncores
 
-#   cat("Use the GenerateReport function to create a detailed simulation report.\n")
+  # Run simulations on multiple cores to compute key characteristics
 
-# }
+  if (ncores > 1) {
+    # nocov start
+    cl = parallel::makeCluster(ncores)
+
+    # Export all functions in the global environment to each node
+    parallel::clusterExport(cl, ls(envir = .GlobalEnv))
+
+    doParallel::registerDoParallel(cl)
+    simulation_list = foreach(counter=(1:ncores), .packages = c("MedianaDesigner")) %dorng% { 
+      MultAdj1SingleCore(parameters)
+    }
+    stopCluster(cl)
+
+    # Combine the simulation results across the cores 
+
+    sim_results = NULL
+    for (i in 1:ncores) {
+      sim_results = rbind(sim_results, simulation_list[[i]]$sim_results)
+    }
+    simulations = list(sim_results = sim_results)
+    # nocov end
+  } else {
+
+    simulations = MultAdj1SingleCore(parameters)
+
+  }
+
+  return(simulations)
+}
+
+MultAdj1SingleCore = function(parameters) {
+  params_for_core = parameters
+  params_for_core$nsims = parameters$nsims_per_core
+
+  simulations = MultAdjC1(params_for_core)
+  return(simulations)
+}
+
+# --==[ MultAdj2 ]==--
+MultAdj2NCores = function(parameters) {
+  ncores = parameters$ncores
+
+  # Run simulations on multiple cores to compute key characteristics
+
+  if (ncores > 1) {
+    # nocov start
+    cl = parallel::makeCluster(ncores)
+
+    # Export all functions in the global environment to each node
+    parallel::clusterExport(cl, ls(envir = .GlobalEnv))
+
+    doParallel::registerDoParallel(cl)
+    simulation_list = foreach(counter=(1:ncores), .packages = c("MedianaDesigner")) %dorng% { 
+      MultAdj2SingleCore(parameters)
+    }
+    stopCluster(cl)
+
+    # Combine the simulation results across the cores 
+
+    sim_results = NULL
+    for (i in 1:ncores) {
+      sim_results = rbind(sim_results, simulation_list[[i]]$sim_results)
+    }
+    simulations = list(sim_results = sim_results)
+    # nocov end
+  } else {
+
+    simulations = MultAdj2SingleCore(parameters)
+
+  }
+
+  return(simulations)
+}
+
+MultAdj2SingleCore = function(parameters) {
+  params_for_core = parameters
+  params_for_core$nsims = parameters$nsims_per_core
+
+  simulations = MultAdjC2(params_for_core)
+  return(simulations)
+}
+
+# --==[ MultAdj3 ]==--
+MultAdj3NCores = function(parameters) {
+  ncores = parameters$ncores
+
+  # Run simulations on multiple cores to compute key characteristics
+
+  if (ncores > 1) {
+    # nocov start
+    cl = parallel::makeCluster(ncores)
+
+    # Export all functions in the global environment to each node
+    parallel::clusterExport(cl, ls(envir = .GlobalEnv))
+
+    doParallel::registerDoParallel(cl)
+    simulation_list = foreach(counter=(1:ncores), .packages = c("MedianaDesigner")) %dorng% { 
+      MultAdj3SingleCore(parameters)
+    }
+    stopCluster(cl)
+
+    # Combine the simulation results across the cores 
+
+    sim_results = NULL
+    for (i in 1:ncores) {
+      sim_results = rbind(sim_results, simulation_list[[i]]$sim_results)
+    }
+    simulations = list(sim_results = sim_results)
+    # nocov end
+  } else {
+
+    simulations = MultAdj3SingleCore(parameters)
+
+  }
+
+  return(simulations)
+}
+
+MultAdj3SingleCore = function(parameters) {
+  params_for_core = parameters
+  params_for_core$nsims = parameters$nsims_per_core
+
+  simulations = MultAdjC3(params_for_core)
+  return(simulations)
+}

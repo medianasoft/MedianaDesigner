@@ -17,7 +17,7 @@ The following design parameters will be used in this example:
 
 Dose-response modeling at the end of each stage will be performed using the MCPMod approach based on four dose-response models (linear, exponential, Emax and logistic models). Non-linear parameters of these models will be specified as shown below (note that no parameter needs to be specified for the linear model). The rule for updating the randomization scheme will be based on the posterior probability of achieving a clinically meaningful improvement over placebo in each dosing group. The threshold for clinically meaningful improvement will be set at 1.5. 
 
-Operating characteristics of the response-adaptive design will be evaluated using the \code{\link{ADRand}} function. As shown below, a list of all design and decision rule parameters (\code{parameters}) will be created and then passed to this function. It's important to note that, due to the use of Bayesian calculations, the simulation process will be rather slow.
+Operating characteristics of the response-adaptive design will be evaluated using the \code{\link{ADRand}} function. As shown below, a list of all design and decision rule parameters (\code{parameters}) will be created and then passed to this function. It's important to note that, due to the use of Bayesian calculations, the simulation process will be rather slow. It is recommended to take advantage of parallel calculations by setting the number of cores (\code{ncores}) to a larger value as shown below. 
 
 A simulation report for this adaptive design can be created by calling the \code{\link{GenerateReport}} function. The same functionality is also available via a Shiny-based application that can be launched by calling the \code{\link{ADRandApp}} function.
 }
@@ -87,8 +87,11 @@ parameters$logistic_model_parameters = c(125, 25)
 # One-sided Type I error rate
 parameters$alpha = 0.025
 
+# Number of cores for parallel calculations
+parameters$ncores = 3
+
 # Number of simulations, you should prefer more
-parameters$nsims = 35
+parameters$nsims = 30
 
 # Remove this parameter in your code:
 parameters$withoutCharts = TRUE

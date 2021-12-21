@@ -22,8 +22,8 @@ For more information on this package, visit \url{https://mediana.us/free-softwar
 \tabular{ll}{
 Package: \tab MedianaDesigner\cr
 Type: \tab Package\cr
-Version: \tab 0.5\cr
-Date: \tab 2021-10-25\cr
+Version: \tab 0.7\cr
+Date: \tab 2021-12-20\cr
 License: \tab GPL-3
 }
 Key functions included in the package:
