@@ -109,6 +109,15 @@ vector<double> Gamma(const int &n, const double &shape, const double &rate) {
 
 }
 
+// Vector of beta distributed values 
+vector<double> Beta(const int &n, const double &shape1, const double &shape2) {
+
+    NumericVector temp_vector = Rcpp::rbeta(n, shape1, shape2);
+    vector<double> result = as<vector<double>>(temp_vector); 
+    return result;  
+
+}
+
 // Vector of truncated exponential values 
 vector<double> TruncatedExponential(const int &n, const double &par, const double &min, const double &max) {
 

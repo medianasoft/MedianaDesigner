@@ -517,7 +517,7 @@ ADTreatSelReportDoc = function(results) {
 
    # Error checks
 
-   if (class(results) != "ADTreatSelResults") stop("The object was not created by the ADTreatSel function", call. = FALSE)
+   if (!is(results, "ADTreatSelResults")) stop("The object was not created by the ADTreatSel function", call. = FALSE)
 
   #############################################################################
 

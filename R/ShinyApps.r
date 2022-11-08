@@ -50,4 +50,11 @@ MultAdjApp = function() {
 
 }
 
+ClustRandApp = function() {
+
+  appDir = system.file("ClustRandApp", package = "MedianaDesigner")
+  shiny::runApp(appDir, display.mode = "normal")
+
+}
+
 # nocov end

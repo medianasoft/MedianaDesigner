@@ -515,7 +515,7 @@ ADSSModReportDoc = function(results) {
 
    # Error checks
 
-   if (class(results) != "ADSSModResults") stop("The object was not created by the ADSSMod function", call. = FALSE)
+   if (!is(results, "ADSSModResults")) stop("The object was not created by the ADSSMod function", call. = FALSE)
 
   #############################################################################
 

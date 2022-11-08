@@ -1,3 +1,5 @@
+options("scipen" = 100, "digits" = 4)
+
 require(devEMF)
 require(officer)
 require(flextable)
@@ -5,6 +7,9 @@ require(foreach)
 require(doParallel)
 require(doRNG)
 require(parallel)
+suppressPackageStartupMessages(require(lme4))
+suppressPackageStartupMessages(require(lmerTest))
+require(rootSolve)
 
 endpoint_list = c("Normal", "Binary", "Time-to-event")
 
@@ -304,13 +309,14 @@ CreateTable = function(data_frame, column_names, column_width, title, page_break
 # Generate function-specific simulation reports 
 ReportDoc = function(results) {
 
-  if (class(results) == "ADSSModResults") doc = ADSSModReportDoc(results)
-  if (class(results) == "ADTreatSelResults") doc = ADTreatSelReportDoc(results)
-  if (class(results) == "ADPopSelResults") doc = ADPopSelReportDoc(results)
-  if (class(results) == "FutRuleResults") doc = FutRuleReportDoc(results)
-  if (class(results) == "EventPredResults") doc = EventPredReportDoc(results)
-  if (class(results) == "ADRandResults") doc = ADRandReportDoc(results)
-  if (class(results) == "MultAdjResults") doc = MultAdjReportDoc(results)
+  if (is(results, "ADSSModResults")) doc = ADSSModReportDoc(results)
+  if (is(results, "ADTreatSelResults")) doc = ADTreatSelReportDoc(results)
+  if (is(results, "ADPopSelResults")) doc = ADPopSelReportDoc(results)
+  if (is(results, "FutRuleResults")) doc = FutRuleReportDoc(results)
+  if (is(results, "EventPredResults")) doc = EventPredReportDoc(results)
+  if (is(results, "ADRandResults")) doc = ADRandReportDoc(results)
+  if (is(results, "MultAdjResults")) doc = MultAdjReportDoc(results)
+  if (is(results, "ClustRandResults")) doc = ClustRandReportDoc(results)
 
   return(doc)  
 
@@ -400,5 +406,16 @@ print.ADRandResults = function (x, ...) {
 #' @export
 #' @exportS3Method
 print.MultAdjResults = function (x, ...) {
+  cat("Use the GenerateReport function to create a detailed simulation report.\n")  # nocov
+}
+
+#' Print method for ClustRandResults
+#'
+#' @param x ClustRandResults object
+#' @param ... Arguments passed to or from other methods
+#'
+#' @export
+#' @exportS3Method
+print.ClustRandResults = function (x, ...) {
   cat("Use the GenerateReport function to create a detailed simulation report.\n")  # nocov
 }

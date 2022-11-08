@@ -87,12 +87,11 @@ parameters$logistic_model_parameters = c(125, 25)
 # One-sided Type I error rate
 parameters$alpha = 0.025
 
-# Number of cores for parallel calculations 
-# (this is an example of how to run simulations on 3 cores)
-# parameters$ncores = 3
+# Number of cores for parallel calculations
+parameters$ncores = 1
 
-# Number of simulations, you should prefer more
-parameters$nsims = 30
+# Number of simulations, you should prefer more (use large values!)
+parameters$nsims = 10
 
 # Remove this parameter in your code:
 parameters$withoutCharts = TRUE

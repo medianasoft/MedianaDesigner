@@ -8,6 +8,7 @@
 \alias{FutRuleReportDoc}
 \alias{ADRandReportDoc}
 \alias{MultAdjReportDoc}
+\alias{ClustRandReportDoc}
 \alias{print.ADSSModResults}
 \alias{print.ADTreatSelResults}
 \alias{print.ADPopSelResults}
@@ -15,7 +16,7 @@
 \alias{print.EventPredResults}
 \alias{print.ADRandResults}
 \alias{print.MultAdjResults}
-
+\alias{print.ClustRandResults}
 \title{
 Simulation report  
 }

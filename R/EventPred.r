@@ -348,7 +348,7 @@ EventPredReportDoc = function(results) {
 
    # Error checks
 
-   if (class(results) != "EventPredResults") stop("The object was not created by the EventPred function", call. = FALSE)
+   if (!is(results, "EventPredResults")) stop("The object was not created by the EventPred function", call. = FALSE)
 
   #############################################################################
 

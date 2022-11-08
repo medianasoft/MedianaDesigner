@@ -422,7 +422,7 @@ FutRuleReportDoc = function(results) {
 
    # Error checks
 
-   if (class(results) != "FutRuleResults") stop("The object was not created by the FutRule function.", call. = FALSE)
+   if (!is(results, "FutRuleResults")) stop("The object was not created by the FutRule function.", call. = FALSE)
 
   #############################################################################
 

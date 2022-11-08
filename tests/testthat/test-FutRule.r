@@ -1,4 +1,4 @@
-commonNSim = 100
+commonNSim = 50
 isTestMultiCore = FALSE
 
 # Normal case parameters
@@ -126,8 +126,8 @@ checkExpectationsForNormalCase = function(results) {
   sensitivity = sim_summary$sensitivity
   expect_equal(min(sensitivity), 0, tolerance=0.01)
   expect_equal(max(sensitivity), 1, tolerance=0.01)
-  expect_equal(median(sensitivity), 0.70, tolerance=0.02)  # <- 
-  expect_equal(mean(sensitivity),   0.67, tolerance=0.05)
+  expect_equal(median(sensitivity), 0.80, tolerance=0.02)  # <- 
+  expect_equal(mean(sensitivity),   0.78, tolerance=0.05)
   expect_equal(sum(sensitivity),    64.868, tolerance=1.0)  # <- 
 
   # check accuracy & cp_threshold
@@ -246,9 +246,8 @@ test_that("Success run FutRule with Time-to-event case", {
   expect_true(
     abs(optimal_lower - 5) < 5, 
     info = paste("optimal_lower(",optimal_lower,") is out of range 5±5"))
-  expect_true(
-    abs(optimal_upper - 50) < 20,
-    info = paste("optimal_upper(",optimal_upper,") is out of range 50±20"))
+  expect_equivalent(optimal_upper, 20, tolerance = 20, label =
+    paste("optimal_upper(",optimal_upper,") is out of range 20±20"))
 
   # Check for report generation
   FutRuleReportDoc(results)

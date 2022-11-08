@@ -1,4 +1,4 @@
-commonNSim = 100
+commonNSim = 50
 isTestMultiCore = FALSE
 
 #####################################

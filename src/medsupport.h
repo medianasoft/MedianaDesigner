@@ -23,6 +23,22 @@ vector<int> FillVecInt(const int &n, const int &value) {
     return result;  
 }
 
+// Matrix of constant values
+NumericMatrix FillMat(const NumericMatrix &mat, const double &value) {
+
+    int i, j, a = mat.nrow(), b = mat.ncol();
+    NumericMatrix res(a, b);
+
+    for (i = 0; i < a; i++) {
+        for (j = 0; j < b; j++) {
+            res(i, j) = value;    
+        }
+    }
+
+    return res;
+ 
+}
+
 // Vector of treatment indicators
 vector<int> FillTreatmentIndicators(const vector<int> &n) { 
 
@@ -124,7 +140,6 @@ double scalprod(const vector<double> &x, const vector<double> &y) {
     return sum;
 }
 
-
 vector<double> AddVec(const vector<double> &x, const vector<double> &y) {
     int i, m = x.size();
     vector<double> sum(m);
@@ -147,5 +162,60 @@ vector<double> ComputeAverage(vector<double> &vec, const int &nsims) {
 
 }
 // # nocov end
+
+// Convert a vector
+vector<double> FromNumericVector(const NumericVector &vec) {
+
+    int i, a = vec.size();  
+
+    vector<double> res(a);
+
+    for (i = 0; i < a; i++) res[i] = vec[i];    
+
+    return(res);
+
+}
+
+// Convert a vector
+NumericVector ToNumericVector(const vector<double> &vec) {
+
+    int i, a = vec.size();  
+
+    NumericVector res(a);
+
+    for (i = 0; i < a; i++) res[i] = vec[i];    
+
+    return(res);
+
+}
+
+// # nocov start
+// Convert a vector
+vector<int> FromIntegerVector(const IntegerVector &vec) {
+
+    int i, a = vec.size();  
+
+    vector<int> res(a);
+
+    for (i = 0; i < a; i++) res[i] = vec[i];    
+
+    return(res);
+
+}
+// # nocov end
+
+// Convert a vector
+IntegerVector ToIntegerVector(const vector<int> &vec) {
+
+    int i, a = vec.size();  
+
+    IntegerVector res(a);
+
+    for (i = 0; i < a; i++) res[i] = vec[i];    
+
+    return(res);
+
+}
+
 
 #endif // MEDSUPPORT_H

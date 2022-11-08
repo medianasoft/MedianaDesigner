@@ -521,7 +521,7 @@ ADPopSelReportDoc = function(results) {
 
    # Error checks
 
-   if (class(results) != "ADPopSelResults") stop("The object was not created by the ADPopSel function", call. = FALSE)
+   if (!is(results, "ADPopSelResults")) stop("The object was not created by the ADPopSel function", call. = FALSE)
 
   #############################################################################
 

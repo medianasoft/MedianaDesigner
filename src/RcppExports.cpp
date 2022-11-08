@@ -6,6 +6,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // ADSSModC
 List ADSSModC(const List& parameters_arg);
 RcppExport SEXP _MedianaDesigner_ADSSModC(SEXP parameters_argSEXP) {
@@ -105,6 +110,43 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ClustRandGEEC
+List ClustRandGEEC(const List& parameters_arg);
+RcppExport SEXP _MedianaDesigner_ClustRandGEEC(SEXP parameters_argSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const List& >::type parameters_arg(parameters_argSEXP);
+    rcpp_result_gen = Rcpp::wrap(ClustRandGEEC(parameters_arg));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ExportTradMultAdj
+NumericVector ExportTradMultAdj(const int& test, const NumericVector& pvalue, const NumericVector& weight, const NumericVector& transition);
+RcppExport SEXP _MedianaDesigner_ExportTradMultAdj(SEXP testSEXP, SEXP pvalueSEXP, SEXP weightSEXP, SEXP transitionSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const int& >::type test(testSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type pvalue(pvalueSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type transition(transitionSEXP);
+    rcpp_result_gen = Rcpp::wrap(ExportTradMultAdj(test, pvalue, weight, transition));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ExportRandomClusterSize
+IntegerVector ExportRandomClusterSize(const int& sample_size, const NumericVector& proportion);
+RcppExport SEXP _MedianaDesigner_ExportRandomClusterSize(SEXP sample_sizeSEXP, SEXP proportionSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const int& >::type sample_size(sample_sizeSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type proportion(proportionSEXP);
+    rcpp_result_gen = Rcpp::wrap(ExportRandomClusterSize(sample_size, proportion));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_MedianaDesigner_ADSSModC", (DL_FUNC) &_MedianaDesigner_ADSSModC, 1},
@@ -116,6 +158,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_MedianaDesigner_MultAdjC1", (DL_FUNC) &_MedianaDesigner_MultAdjC1, 1},
     {"_MedianaDesigner_MultAdjC2", (DL_FUNC) &_MedianaDesigner_MultAdjC2, 1},
     {"_MedianaDesigner_MultAdjC3", (DL_FUNC) &_MedianaDesigner_MultAdjC3, 1},
+    {"_MedianaDesigner_ClustRandGEEC", (DL_FUNC) &_MedianaDesigner_ClustRandGEEC, 1},
+    {"_MedianaDesigner_ExportTradMultAdj", (DL_FUNC) &_MedianaDesigner_ExportTradMultAdj, 4},
+    {"_MedianaDesigner_ExportRandomClusterSize", (DL_FUNC) &_MedianaDesigner_ExportRandomClusterSize, 2},
     {NULL, NULL, 0}
 };
 

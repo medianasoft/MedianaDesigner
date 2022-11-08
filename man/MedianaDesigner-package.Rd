@@ -15,6 +15,7 @@ The MedianaDesigner package provides efficient simulation-based power and sample
 \item Blinded event prediction in event-driven trials.
 \item Adaptive trials with response-adaptive randomization (experimental module).
 \item Traditional trials with multiple objectives (experimental module).
+\item Traditional trials with cluster-randomized designs (experimental module).
 }
 For more information on this package, visit \url{https://mediana.us/free-software/}. The technical manuals with a detailed description of the statistical methodology implemented in each module are available at \url{https://medianasoft.github.io/MedianaDesigner}. Additional information and multiple case studies can be found in the online manual at \url{https://medianasoft.github.io/MedianaDesigner}.
 }
@@ -22,8 +23,8 @@ For more information on this package, visit \url{https://mediana.us/free-softwar
 \tabular{ll}{
 Package: \tab MedianaDesigner\cr
 Type: \tab Package\cr
-Version: \tab 0.7\cr
-Date: \tab 2021-12-20\cr
+Version: \tab 0.8\cr
+Date: \tab 2022-06-20\cr
 License: \tab GPL-3
 }
 Key functions included in the package:
@@ -43,13 +44,15 @@ Key functions included in the package:
 \item \code{\link{ADRandApp}}: Graphical user interface for designing adaptive trials with response-adaptive randomization.
 \item \code{\link{MultAdj}}: Simulation-based design of traditional trials with multiple objectives.
 \item \code{\link{MultAdjApp}}: Graphical user interface for power calculations in traditional trials with multiple objectives.
+\item \link{ClustRand}: Simulation-based design of cluster-randomized trials.
+\item \link{ClustRandApp}: Graphical user interface for power calculations in cluster-randomized trials.
 \item \code{\link{GenerateReport}}: Simulation report for any module.
 }
 The package comes with one example data set:
 \itemize{
 \item \code{\link{EventPredData}}: Example data set to illustrate event prediction in event-driven trials.
 }
-Multiple case studies are included in this vignette to illustrate the use of this package for designing clinical trials with data-driven design elements:
+Multiple case studies are included in this vignette to illustrate the use of this package for designing clinical trials with adaptive and traditional design:
 \itemize{
 \item \link{ADSSModExample1}: Simulation-based design of an adaptive trial with sample size re-estimation (normally distributed endpoint).
 \item \link{ADSSModExample2}: Simulation-based design of an adaptive trial with sample size re-estimation (binary endpoint).
@@ -68,6 +71,8 @@ Multiple case studies are included in this vignette to illustrate the use of thi
 \item \link{MultAdjExample1}: Simulation-based power calculations in Phase III trials with multiple dose-placebo comparisons.
 \item \link{MultAdjExample2}: Simulation-based power calculations in Phase III trials with multiple endpoints.
 \item \link{MultAdjExample3}: Simulation-based power calculations in Phase III trials with multiple endpoints and multiple dose-placebo comparisons.
+\item \link{ClustRandExample1}: Simulation-based design of a cluster-randomized trial (normally distributed endpoint).
+\item \link{ClustRandExample2}: Simulation-based design of a cluster-randomized trial (binary endpoint).
 }
 
 }
@@ -75,6 +80,8 @@ Multiple case studies are included in this vignette to illustrate the use of thi
 Mediana (www.mediana.us). We would like to thank multiple individuals, including Thomas Brechenmacher (IQVIA), Douglas McNair (Gates Foundation) and Thomas Peppard (Certara), for their feedback that helped us improve the package and add new features.
 }
 \references{
+Ahn, C., Heo, M., Zhang, S. (2015). \emph{Sample Size Calculations for Clustered and Longitudinal Outcomes in Clinical Research}. Chapman and Hall/CRC.
+
 Alosh, M., Bretz, F., Huque, M. (2014). Advanced multiplicity adjustment methods in clinical trials. \emph{Statistics in Medicine}. 33, 693-713.
 
 Bagiella, E., Heitjan, D.F. (2001). Predicting analysis times in randomized clinical trials. \emph{Statistics in Medicine}. 20, 2055-2063.
@@ -92,6 +99,8 @@ Dmitrienko, A., Kordzakhia, G., Brechenmacher, T. (2016). Mixture-based gatekeep
 Dmitrienko, A., Paux, G. (2017). Subgroup analysis in clinical trials. \emph{Clinical Trial Optimization Using R}. Dmitrienko, A., Pulkstenis, E. (editors). Chapman and Hall/CRC Press, New York.
 
 Dmitrienko, A., D'Agostino, R.B. (2018). Multiplicity considerations in clinical trials. \emph{New England Journal of Medicine}. 378, 2115-2122.
+
+Hayes, R.J., Moulton, L.H. (2009). emph{Cluster Randomised Trials: A Practical Approach}. Chapman and Hall/CRC.
 
 Herson, J. (1979). Predictive probability early termination plans for Phase II clinical trials. \emph{Biometrics}. 35, 775-783.
 

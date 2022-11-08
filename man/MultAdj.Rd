@@ -2,6 +2,7 @@
 \alias{MultAdj}
 \alias{MultAdjC}
 \alias{MultAdj1SingleCore}
+\alias{ExportTradMultAdj}
 \title{
 Simulation-based design of traditional trials with multiple objectives
 }

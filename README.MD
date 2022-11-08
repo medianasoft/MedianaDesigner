@@ -19,6 +19,7 @@ This package supports efficient simulation-based power and sample size calculati
 * Blinded event prediction in event-driven trials (EventPred function).
 * Adaptive trials with response-adaptive randomization (ADRand function) [experimental module].
 * Traditional trials with multiple objectives (MultAdj function) [experimental module].
+* Cluster-randomized trials (ClustRand function) [experimental module].
 
 For more information on this package, visit [Mediana's web site](http://www.mediana.us/free-software). The latest stable version of the package can be downloaded from [CRAN](https://cran.r-project.org/web/packages/MedianaDesigner/index.html). 
 
@@ -31,8 +32,11 @@ The technical manuals with a detailed description of the statistical methodology
 * [Blinded event prediction in event-driven trials](http://www.mediana.us/MedianaDesigner/EventPred.pdf).
 * [Adaptive trials with response-adaptive randomization](http://www.mediana.us/MedianaDesigner/ADRand.pdf).
 * [Traditional trials with multiple objectives](http://www.mediana.us/MedianaDesigner/MultAdj.pdf).
+* [Traditional trials with cluster-randomized designs](http://www.mediana.us/MedianaDesigner/ClustRand.pdf).
 
-Additional information and multiple case studies can be found in the [online manual](https://medianasoft.github.io/MedianaDesigner).
+Additional information and multiple case studies can be found in the [online manual (English)](https://medianasoft.github.io/MedianaDesigner) or [online manual (French)](https://medianasoft.github.io/MedianaDesignerFrench).
+
+An online training course on adaptive designs and clinical trial simulation is available on [Mediana's YouTube channel](https://www.youtube.com/channel/UCAQUAsQxxnzje4rEdJ4870Q).
 
 ## Functions
 
@@ -52,6 +56,8 @@ Key functions included in the package:
 * ADRandApp: Graphical user interface for designing adaptive trials with response-adaptive randomization.
 * MultAdj: Simulation-based design of traditional trials with multiple objectives.
 * MultAdjApp: Graphical user interface for power calculations in traditional trials with multiple objectives.
+* ClustRand: Simulation-based design of cluster-randomized trials.
+* ClustRandApp: Graphical user interface for power calculations in cluster-randomized trials.
 * GenerateReport: Simulation report for any of the modules.
 
 ## Feedback
@@ -62,6 +68,7 @@ We would like to thank multiple individuals, including Thomas Brechenmacher (IQV
 
 ## References
 
+* Ahn, C., Heo, M., Zhang, S. (2015). Sample Size Calculations for Clustered and Longitudinal Outcomes in Clinical Research. Chapman and Hall/CRC.
 * Alosh, M., Bretz, F., Huque, M. (2014). Advanced multiplicity adjustment methods in clinical trials. Statistics in Medicine. 33, 693-713.
 * Bagiella, E., Heitjan, D.F. (2001). Predicting analysis times in randomized clinical trials. Statistics in Medicine. 20, 2055-2063.
 * Chuang-Stein, C., Kirby, S., French, J., Kowalski, K., Marshall, S., Smith, M. K. (2011). A quantitative approach for making go/no-go decisions in drug development. Drug Information Journal. 45, 187-202.
@@ -71,6 +78,7 @@ We would like to thank multiple individuals, including Thomas Brechenmacher (IQV
 * Dmitrienko, A., Kordzakhia, G., Brechenmacher, T. (2016). Mixture-based gatekeeping procedures for multiplicity problems with multiple sequences of hypotheses. Journal of Biopharmaceutical Statistics. 26, 758-780.
 * Dmitrienko, A., Paux, G. (2017). Subgroup analysis in clinical trials. Clinical Trial Optimization Using R. Dmitrienko, A., Pulkstenis, E. (editors). Chapman and Hall/CRC Press, New York.
 * Dmitrienko, A., D'Agostino, R.B. (2018). Multiplicity considerations in clinical trials. New England Journal of Medicine. 378, 2115-2122.
+* Hayes, R.J., Moulton, L.H. (2009). Cluster Randomised Trials: A Practical Approach. Chapman and Hall/CRC.
 * Herson, J. (1979). Predictive probability early termination plans for Phase II clinical trials. Biometrics. 35, 775-783.
 * Kordzakhia, G., Brechenmacher, T., Ishida, E., Dmitrienko, A., Zheng, W.W., Lie, D.F. (2018). An enhanced mixture method for constructing gatekeeping procedures in clinical trials. Journal of Biopharmaceutical Statistics. 28, 113-128.
 * Millen, B., Dmitrienko, A., Ruberg, S., Shen, L. (2012). A statistical framework for decision making in confirmatory multi-population tailoring clinical trials. Drug Information Journal. 46, 647-656.

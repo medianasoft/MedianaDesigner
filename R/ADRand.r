@@ -665,7 +665,7 @@ ADRandReportDoc = function(results) {
 
     # Error checks
 
-    if (class(results) != "ADRandResults") stop("The object was not created by the ADRand function.", call. = FALSE)
+    if (!is(results, "ADRandResults")) stop("The object was not created by the ADRand function.", call. = FALSE)
 
     #############################################################################
 

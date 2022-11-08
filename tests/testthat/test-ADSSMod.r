@@ -1,4 +1,4 @@
-commonNSim = 100
+commonNSim = 50
 isTestMultiCore = FALSE
 
 # Normal case parameters
@@ -208,7 +208,7 @@ test_that("Success run ADSSMod with Binary case", {
   results = ADSSMod(binaryCase)
   expect_type(results$sim_results, "double")
   expect_type(results$sim_summary, "list")
-  expect_length(results$sim_results, 1900)
+  expect_length(results$sim_results, 19 * binaryCase$nsims)
 
   expect_true(abs(results$sim_summary$futility - 0.2) < 0.2)
   expect_true(abs(results$sim_summary$increase - 0.2) < 0.2)
@@ -228,7 +228,7 @@ test_that("Success run ADSSMod with Time-to-event case", {
   results = ADSSMod(timeToEventCase)
   expect_type(results$sim_results, "double")
   expect_type(results$sim_summary, "list")
-  expect_length(results$sim_results, 1900)
+  expect_length(results$sim_results, 19 * binaryCase$nsims)
 
   expect_true(abs(results$sim_summary$futility - 0.2) < 0.2)
   expect_true(abs(results$sim_summary$increase - 0.2) < 0.2)
@@ -266,7 +266,7 @@ test_that("Success run ADSSMod with Time-to-event case with Lower direction", {
   )
   expect_type(results$sim_results, "double")
   expect_type(results$sim_summary, "list")
-  expect_length(results$sim_results, 1900)
+  expect_length(results$sim_results, 19 * binaryCase$nsims)
 
   # Check for report generation
   ADSSModReportDoc(results)

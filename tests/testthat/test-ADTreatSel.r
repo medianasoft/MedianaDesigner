@@ -1,4 +1,4 @@
-commonNSim = 100
+commonNSim = 50
 isTestMultiCore = FALSE
 
 # Normal case parameters
@@ -275,9 +275,7 @@ test_that("Success run ADTreatSel with Binary case", {
   
   expect_is(      results$sim_summary$select, "numeric")
   expect_length(  results$sim_summary$select, 3)
-  expect_true(abs(results$sim_summary$select[1] - 0.35) < 0.1)
-  expect_true(abs(results$sim_summary$select[2] - 0.33) < 0.1)
-  expect_true(abs(results$sim_summary$select[3] - 0.31) < 0.1)
+  expect_equivalent(results$sim_summary$select, c(0.35, 0.33, 0.42), tolerance=0.1)
   
   expect_is(      results$sim_summary$futility, "numeric")
   expect_length(  results$sim_summary$futility, 3)
@@ -299,25 +297,16 @@ checkExpectationsForBinaryCase2 = function(res) {
   expect_s3_class(res, "ADTreatSelResults")
 
   # check sim_results
-  expect_length(res$sim_results, 1300)
+  expect_length(res$sim_results, 13 * res$parameters$nsims)
   # check sim_summary
   expect_equal(res$sim_summary$ad_power, 0.9175, tolerance=0.1)
   expect_equal(res$sim_summary$overall_futility, 0.0179, tolerance=0.1)
 
-  expect_equal(unname(res$sim_summary$trad_power[1]), 0.7133, tolerance=0.1)
-  expect_equal(unname(res$sim_summary$trad_power[2]), 0.7175, tolerance=0.1)
-  expect_equal(unname(res$sim_summary$trad_power[3]), 0.8435, tolerance=0.1)
-  expect_equal(unname(res$sim_summary$trad_power[4]), 0.8375, tolerance=0.1)
+  expect_equivalent(res$sim_summary$trad_power, c(0.7133, 0.7175, 0.8435, 0.8375), tolerance=0.1)
 
-  expect_equal(unname(res$sim_summary$select[1]), 0.1612, tolerance=0.1)
-  expect_equal(unname(res$sim_summary$select[2]), 0.1639, tolerance=0.1)
-  expect_equal(unname(res$sim_summary$select[3]), 0.3867, tolerance=0.1)
-  expect_equal(unname(res$sim_summary$select[4]), 0.3801, tolerance=0.1)
+  expect_equivalent(res$sim_summary$select, c(0.1612, 0.1639, 0.3867, 0.3801), tolerance=0.2)
 
-  expect_equal(unname(res$sim_summary$futility[1]), 0.2326, tolerance=0.1)
-  expect_equal(unname(res$sim_summary$futility[2]), 0.2253, tolerance=0.1)
-  expect_equal(unname(res$sim_summary$futility[3]), 0.1424, tolerance=0.1)
-  expect_equal(unname(res$sim_summary$futility[4]), 0.1468, tolerance=0.1)
+  expect_equivalent(res$sim_summary$futility, c(0.2326, 0.2253, 0.1424, 0.1468), tolerance=0.2)
 }
 
 test_that("Success run ADTreatSel with Binary case 2 (one core)", {
@@ -328,11 +317,6 @@ test_that("Success run ADTreatSel with Binary case 2 (one core)", {
   # params$ncores = 1
   res = ADTreatSel(params)
   checkExpectationsForBinaryCase2(res)
-
-  # print for debug
-  # print(class(res))
-  # class(res) = "Result"
-  # print(res)
 
 })
 

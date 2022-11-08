@@ -37,3 +37,15 @@ MultAdjC3 <- function(parameters_arg) {
     .Call(`_MedianaDesigner_MultAdjC3`, parameters_arg)
 }
 
+ClustRandGEEC <- function(parameters_arg) {
+    .Call(`_MedianaDesigner_ClustRandGEEC`, parameters_arg)
+}
+
+ExportTradMultAdj <- function(test, pvalue, weight, transition) {
+    .Call(`_MedianaDesigner_ExportTradMultAdj`, test, pvalue, weight, transition)
+}
+
+ExportRandomClusterSize <- function(sample_size, proportion) {
+    .Call(`_MedianaDesigner_ExportRandomClusterSize`, sample_size, proportion)
+}
+

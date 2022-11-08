@@ -530,7 +530,6 @@ MultAdj = function(parameters) {
   parameters$hazard_rates = 0
   parameters$dropout_parameter = 0
   parameters$enrollment_distribution = 2
-  parameters$max_sample_size = max(parameters$sample_size)
 
   # All means and SDs
   if (endpoint_index == 1) {
@@ -563,7 +562,11 @@ MultAdj = function(parameters) {
   # Total sample size after accounting for dropout rates
   if (endpoint_index != 3) {
     parameters$sample_size_adj = floor(parameters$sample_size * (1 - parameters$dropout_rate))
+  } else {
+    parameters$sample_size_adj = parameters$sample_size
   }
+
+  parameters$max_sample_size = max(parameters$sample_size_adj)
 
   ###########################################################
 
@@ -709,7 +712,7 @@ MultAdjReportDoc = function(results) {
 
    # Error checks
 
-   if (class(results) != "MultAdjResults") stop("The object was not created by the MultAdj function", call. = FALSE)
+   if (!is(results, "MultAdjResults")) stop("The object was not created by the MultAdj function", call. = FALSE)
 
   #############################################################################
 

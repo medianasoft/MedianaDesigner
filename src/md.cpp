@@ -4,6 +4,7 @@
 using namespace Numer;
 using namespace std;
 using namespace Rcpp;
+using namespace Eigen;
 
 #include "medstruct.h"
 #include "medsupport.h"
@@ -57,10 +58,10 @@ vector<double> HochbergOutcome(const vector<double> &pvalue, const double &alpha
                 outcome[1] = 1;
             }
 
-            if (pvalue[0] > alpha && pvalue[1] <= alpha / 2) { 
+            if (pvalue[0] > alpha && pvalue[1] <= alpha / 2) {      // # nocov start
                 outcome[0] = 0;
                 outcome[1] = 1;
-            }
+            }                                                       // # nocov end
 
         }
 
@@ -2658,7 +2659,7 @@ List MultAdjC1(const List &parameters_arg) {
 
     List parameters(parameters_arg);
 
-    vector<int> sample_size = as<vector<int>>(parameters["sample_size"]);
+    vector<int> sample_size = as<vector<int>>(parameters["sample_size_adj"]);
     int max_sample_size = as<int>(parameters["max_sample_size"]);
 
     int ncomparisons = as<int>(parameters["n_comparisons"]);
@@ -2750,7 +2751,7 @@ List MultAdjC2(const List &parameters_arg) {
 
     List parameters(parameters_arg);
 
-    vector<int> sample_size = as<vector<int>>(parameters["sample_size"]);
+    vector<int> sample_size = as<vector<int>>(parameters["sample_size_adj"]);
 
     int nendpoints = as<int>(parameters["n_endpoints"]);
     int mult_test_index = as<int>(parameters["mult_test_index"]);
@@ -2908,7 +2909,7 @@ List MultAdjC3(const List &parameters_arg) {
 
     List parameters(parameters_arg);
 
-    vector<int> sample_size = as<vector<int>>(parameters["sample_size"]);
+    vector<int> sample_size = as<vector<int>>(parameters["sample_size_adj"]);
     int max_sample_size = as<int>(parameters["max_sample_size"]);
 
     int ncomparisons = as<int>(parameters["n_comparisons"]);
@@ -3069,3 +3070,1060 @@ List MultAdjC3(const List &parameters_arg) {
 
 }
 // End of MultAdjC3
+
+// Two vectors of simulation results
+struct SimulationResults {
+    vector<double> pval;
+    vector<double> eff;
+};
+
+// Convert a vector
+NumericVector FromVectorXd(const VectorXd &eigen_vec) {
+
+    int i, a = eigen_vec.size();  
+
+    NumericVector res(a);
+
+    for (i = 0; i < a; i++) res[i] = eigen_vec[i];    
+
+    return(res);
+
+}
+
+// Convert a matrix
+NumericMatrix FromMatrixXd(const MatrixXd &eigen_mat) {
+
+    int i, j, a = eigen_mat.rows();  
+
+    NumericMatrix res(a, a);
+
+    for (i = 0; i < a; i++) {
+        for (j = 0; j < a; j++) {
+            res(i, j) = eigen_mat(i, j);    
+        }
+    }
+
+    return(res);
+
+}
+
+// Convert a matrix
+MatrixXd ToMatrixXd(const NumericMatrix &mat) {
+
+    int i, j, a = mat.nrow();  
+
+    MatrixXd res(a, a);
+
+    for (i = 0; i < a; i++) {
+        for (j = 0; j < a; j++) {
+            res(i, j) = mat(i, j);    
+        }
+    }
+
+    return(res);
+
+}
+
+
+// # nocov start
+// Extract a subset of a matrix
+NumericMatrix ExtractMat(const NumericMatrix &mat, const vector<int> &id, const int &value) {
+
+    int i, j, k, c = 0, a = mat.nrow(), b = mat.ncol(), n = id.size();
+    for (i = 0; i < n; i++) {
+        if (id[i] == value) c++;
+    }
+    
+    NumericMatrix res(c, b);
+
+    k = 0;
+    for (i = 0; i < a; i++) {
+        if (id[i] == value) {
+            for (j = 0; j < b; j++) {
+                res(k, j) = mat(i, j);
+                k++;
+            }
+        }
+    }
+
+    return res;
+
+}
+// # nocov end
+
+// Transpose a matrix
+NumericMatrix TransMat(const NumericMatrix &mat) {
+
+    int i, j, a = mat.nrow(), b = mat.ncol();
+    
+    NumericMatrix res(b, a);
+
+    for (i = 0; i < a; i++) {
+       for (j = 0; j < b; j++) {
+            res(j, i) = mat(i, j); 
+       }
+    }   
+
+    return res;
+
+}    
+
+// Multiply two matrices
+NumericMatrix MultMat(const NumericMatrix &mat1, const NumericMatrix &mat2) {
+
+    int i, j, k, a = mat1.nrow(), b = mat1.ncol(), c = mat2.ncol();  
+    double sum;
+    NumericMatrix res(a, c);
+
+    for (i = 0; i < a; i++) {
+        for (j = 0; j < c; j++) {
+            sum = 0.0;
+            for (k = 0; k < b; k++) sum += mat1(i, k) * mat2(k, j);
+            res(i, j) = sum;    
+        }
+    }
+
+    return res;
+
+}
+
+// Add two matrices
+NumericMatrix AddMat(const NumericMatrix &mat1, const NumericMatrix &mat2) {
+
+    int i, j, a = mat1.nrow(), b = mat1.ncol();  
+    NumericMatrix res(a, b);
+
+    for (i = 0; i < a; i++) {
+        for (j = 0; j < b; j++) {
+            res(i, j) = mat1(i, j) + mat2(i, j);    
+        }
+    }
+
+    return res;
+
+}
+
+// Subtract two matrices
+NumericMatrix SubtractMat(const NumericMatrix &mat1, const NumericMatrix &mat2) {
+
+    int i, j, a = mat1.nrow(), b = mat1.ncol();  
+    NumericMatrix res(a, b);
+
+    for (i = 0; i < a; i++) {
+        for (j = 0; j < b; j++) {
+            res(i, j) = mat1(i, j) - mat2(i, j);    
+        }
+    }
+
+    return res;
+
+}
+
+// Invert a square matrix
+NumericMatrix InvMat(const NumericMatrix &mat) {
+
+    int a = mat.nrow();  
+
+    MatrixXd eigen_mat(a, a), inv_eigen_mat(a, a);
+    NumericMatrix res(a, a);
+
+    eigen_mat = ToMatrixXd(mat); 
+
+    inv_eigen_mat = eigen_mat.inverse();
+
+    res = FromMatrixXd(inv_eigen_mat);
+
+    return res;
+
+}
+
+// Square root of a square matrix
+NumericMatrix InvSqRootMat(const NumericMatrix &mat) {
+
+    int i, j, a = mat.nrow();
+    
+    NumericMatrix res(a, a);
+    MatrixXd eigen_mat(a, a);
+
+    eigen_mat = ToMatrixXd(mat);
+
+    // Singular value decomposition
+    JacobiSVD<MatrixXd>svd(eigen_mat, Eigen::ComputeThinU|Eigen::ComputeThinV);
+
+    NumericMatrix u, v, sqrt_diag(a, a), temp1;
+    NumericVector s;
+
+    u = FromMatrixXd(svd.matrixU());
+    v = FromMatrixXd(svd.matrixV());
+    s = FromVectorXd(svd.singularValues());
+
+    // Square roots of the diagonal elements
+    for (i = 0; i < a; i++) {
+        for (j = 0; j < a; j++) {
+            if (i == j) sqrt_diag(i, j) = 1.0 / sqrt(s(i)); else sqrt_diag(i, j) = 0.0;   
+        }
+    }    
+
+    // Square root of the original matrix
+    temp1 = MultMat(u, sqrt_diag);
+    res = MultMat(temp1, TransMat(v));
+
+    return res;
+
+}
+
+// Generate a vector of random cluster sizes
+vector<int> RandomClusterSize(const int &sample_size, const vector<double> &proportion) {
+
+    int i, j, m = proportion.size();
+    vector<int> cluster_size(m);
+    vector<double> unif;
+
+    unif = Uniform(sample_size, 0.0, 1.0);
+
+    for (i = 0; i < sample_size; i++) {
+
+        if (unif[i] <= proportion[0]) {
+
+            cluster_size[0]++;
+
+        } else {
+
+            if (unif[i] > proportion[m - 2]) {
+
+                cluster_size[m - 1]++;
+
+            } else {
+
+                for (j = 0; j < m - 2; j++) {
+
+                    if (unif[i] > proportion[j] && unif[i] <= proportion[j + 1]) {
+                        cluster_size[j + 1]++;
+                    }
+                }
+            }
+        }
+    }
+
+    return(cluster_size);
+
+}
+
+// Compute initial values of the binary GEE model
+NumericMatrix BinInitValues(const vector<double> &y, const NumericMatrix &x) {
+
+    int i, j, n = y.size();
+    vector<double> p(n), var(n);
+    NumericMatrix xvar(n, 2), r(n, 1), outcome(n, 1), est(2, 1), inc(2, 1), pr, temp1, temp2;
+
+    for (i = 0; i < n; i++) outcome(i, 0) = 2.0 * y[i] - 1.0;
+
+    temp1 = InvMat(MultMat(TransMat(x), x));
+    temp2 = MultMat(temp1, TransMat(x));
+    est = MultMat(temp2, outcome);
+
+    for (j = 0; j < 2; j++) {
+
+        pr = MultMat(x, est);
+
+        for (i = 0; i < n; i++) {
+            p[i] = 1.0 / (1.0 + exp(-pr(i, 0)));
+            var[i] = p[i] * (1.0 - p[i]);
+            r(i, 0) = y[i] - p[i];
+            xvar(i, 0) = x(i, 0) * var[i];
+            xvar(i, 1) = x(i, 1) * var[i];
+        }
+
+        outcome = MultMat(TransMat(x), r);
+        temp1 = InvMat(MultMat(TransMat(x), xvar));
+        inc = MultMat(temp1, outcome);
+
+        est = AddMat(est, inc);
+
+    }
+
+    return est;
+
+}
+
+SimulationResults ContGEE(const vector<double> &y, const NumericMatrix &x, const vector<int> &id, const vector<int> &id_freq, const int &direction_index, const int &max_iterations, const double &min_increment) {
+
+    int i, j, k, cycle, pat, nobs = y.size(), npats = id_freq.size(), npars = 2, npoints, continue_flag, convergence_flag;
+
+    vector<double> est(npars), stderr_sandwich(npars), stderr_kc(npars), stderr_md(npars), pval(4), eff(3);
+
+    double corr, ave, increment, corr_off_diagonal, corr_diagonal, pvalue_sandwich, pvalue_kc, pvalue_md;
+
+    NumericMatrix next_coef(npars, 1), current_coef(npars, 1), est_mat(npars, 1), hessian_mat(npars, npars), gradient_mat_sandwich(npars, npars), gradient_mat_kc(npars, npars), gradient_mat_md(npars, npars), pred, temp1, temp2, temp3, temp4, temp5, inv_corr_mat, cov_mat_sandwich, cov_mat_kc, cov_mat_md, inv_hessian_mat;
+
+    SimulationResults sim_results;
+
+    // Initialize the values    
+    ave = 0.0;    
+    for (i = 0; i < npats; i++) ave += 0.5 * (id_freq[i] + 0.0) * (id_freq[i] - 1.0);
+    corr = 0;
+    next_coef = FillMat(next_coef, 0.0);
+
+    // Stopping condition for model fitting
+    continue_flag = 1;
+    cycle = 0;
+
+    convergence_flag = 1;
+
+    while (continue_flag == 1) {
+
+        // Coefficient estimates in the current step
+        for (i = 0; i < npars; i++) current_coef(i, 0) = next_coef(i, 0);
+
+        est_mat = FillMat(est_mat, 0.0);
+        hessian_mat = FillMat(hessian_mat, 0.0);
+        gradient_mat_sandwich = FillMat(gradient_mat_sandwich, 0.0);
+        gradient_mat_kc = FillMat(gradient_mat_kc, 0.0);
+        gradient_mat_md = FillMat(gradient_mat_md, 0.0);
+
+        corr_off_diagonal = 0.0;
+        corr_diagonal = 0.0;
+
+        // Loop over patients/clusters
+        for (pat = 0; pat < npats; pat++) {
+
+            npoints = id_freq[pat];
+
+            // Correlation matrix for the current patient (under the assumption of an exchangeable working correlation matrix)
+            NumericMatrix corr_mat(npoints, npoints);
+            for (i = 0; i < npoints; i++) {
+                for (j = 0; j < npoints; j++) {
+                    if (i == j) corr_mat(i, j) = 1.0; else corr_mat(i, j) = corr;    
+                }
+            }            
+            inv_corr_mat = InvMat(corr_mat);
+
+            // Extract the x and y values for the current patient/cluster 
+            vector<double> y_cluster(npoints);
+            NumericMatrix x_cluster(npoints, npars);
+            k = 0;
+            for (i = 0; i < nobs; i++) {
+                if (id[i] == pat + 1) {
+                    y_cluster[k] = y[i];
+                    for (j = 0; j < npars; j++) x_cluster(k, j) = x(i, j);                   
+                    k++;    
+                }
+            } 
+
+            // Predicted means
+            NumericMatrix residual(npoints, 1);
+            pred = MultMat(x_cluster, current_coef);
+
+            for (i = 0; i < npoints; i++) residual(i, 0) = y_cluster[i] - pred(i, 0);
+            for (i = 0; i < npoints; i++) corr_diagonal += Sq(residual(i, 0));    
+            for (j = 0; j < npoints - 1; j++) {
+                for (k = j + 1; k < npoints; k++) corr_off_diagonal += residual(j, 0) * residual(k, 0);   
+            }
+ 
+            // Update the estimate matrix
+            temp1 = MultMat(inv_corr_mat, residual);
+            temp2 = MultMat(TransMat(x_cluster), temp1);
+            est_mat = AddMat(est_mat, temp2);
+
+            // Update the Hessian matrix
+            temp1 = MultMat(inv_corr_mat, x_cluster);
+            temp2 = MultMat(TransMat(x_cluster), temp1);
+            hessian_mat = AddMat(hessian_mat, temp2);
+
+            // Update the gradient matrix (uncorrected sandwich estimator)
+            temp1 = MultMat(TransMat(x_cluster), inv_corr_mat);
+            temp2 = MultMat(temp1, residual);
+            temp3 = MultMat(temp2, TransMat(temp2));
+            gradient_mat_sandwich = AddMat(gradient_mat_sandwich, temp3);
+
+        }
+
+        // Simple model-based covariance estimate
+        inv_hessian_mat = InvMat(hessian_mat);
+
+        // Separate loop over patients/clusters to compute bias-corrected covariance estimators
+        for (pat = 0; pat < npats; pat++) {
+
+            npoints = id_freq[pat];
+
+            NumericMatrix identity_mat(npoints, npoints), leverage_mat(npoints, npoints);
+
+            // Correlation matrix for the current patient (under the assumption of an exchangeable working correlation matrix)
+            NumericMatrix corr_mat(npoints, npoints);
+            for (i = 0; i < npoints; i++) {
+                for (j = 0; j < npoints; j++) {
+                    if (i == j) {
+                        corr_mat(i, j) = 1.0;
+                        identity_mat(i, j) = 1.0;
+                    }
+                    else {
+                        corr_mat(i, j) = corr;   
+                        identity_mat(i, j) = 0.0;
+                    } 
+                }
+            }            
+            inv_corr_mat = InvMat(corr_mat);
+
+            // Extract the x and y values for the current patient/cluster 
+            vector<double> y_cluster(npoints);
+            NumericMatrix x_cluster(npoints, npars);
+            k = 0;
+            for (i = 0; i < nobs; i++) {
+                if (id[i] == pat + 1) {
+                    y_cluster[k] = y[i];
+                    for (j = 0; j < npars; j++) x_cluster(k, j) = x(i, j);                   
+                    k++;    
+                }
+            } 
+
+            temp1 = MultMat(x_cluster, inv_hessian_mat);
+            temp2 = MultMat(temp1, TransMat(x_cluster));
+            leverage_mat = MultMat(temp2, inv_corr_mat);
+
+            // Predicted means
+            NumericMatrix residual(npoints, 1);
+            pred = MultMat(x_cluster, current_coef);
+            for (i = 0; i < npoints; i++) residual(i, 0) = y_cluster[i] - pred(i, 0);
+
+            // Update the gradient matrix (sandwich estimator by Kauermann and Carroll)
+            temp1 = MultMat(TransMat(x_cluster), inv_corr_mat);
+            temp2 = InvSqRootMat(SubtractMat(identity_mat, leverage_mat)); 
+
+            temp3 = MultMat(temp1, temp2);
+            temp4 = MultMat(temp3, residual);
+            temp5 = MultMat(temp4, TransMat(temp4));
+            gradient_mat_kc = AddMat(gradient_mat_kc, temp5);
+
+            // Update the gradient matrix (sandwich estimator by Mancl and DeRouen)
+            temp1 = MultMat(TransMat(x_cluster), inv_corr_mat);
+            temp2 = InvMat(SubtractMat(identity_mat, leverage_mat));
+
+            temp3 = MultMat(temp1, temp2);
+            temp4 = MultMat(temp3, residual);
+            temp5 = MultMat(temp4, TransMat(temp4));
+            gradient_mat_md = AddMat(gradient_mat_md, temp5);
+
+
+        }
+
+        // Update the common correlation coefficient (under the assumption of an exchangeable working correlation matrix)
+        corr = corr_off_diagonal * (npats - npars + 0.0) / (corr_diagonal * (ave - npars + 0.0));
+
+        // Update the coefficient estimates
+        temp1 = MultMat(inv_hessian_mat, est_mat);
+        next_coef = AddMat(current_coef, temp1);
+
+        // Covariance matrix for the coefficient estimates (uncorrected sandwich estimator)
+        temp1 = MultMat(gradient_mat_sandwich, inv_hessian_mat);
+        cov_mat_sandwich = MultMat(inv_hessian_mat, temp1);
+
+        // Covariance matrix for the coefficient estimates (sandwich estimator by Kauermann and Carroll)
+        temp1 = MultMat(gradient_mat_kc, inv_hessian_mat);
+        cov_mat_kc = MultMat(inv_hessian_mat, temp1);
+
+        // Covariance matrix for the coefficient estimates (sandwich estimator by Mancl and DeRouen)
+        temp1 = MultMat(gradient_mat_md, inv_hessian_mat);
+        cov_mat_md = MultMat(inv_hessian_mat, temp1);
+
+        cycle++;
+
+        increment = 0;
+        for (i = 0; i < npars; i++) increment += abs(next_coef[i] - current_coef[i]);
+
+        // Stopping condition for model fitting
+        if (cycle >= max_iterations || increment <= min_increment) continue_flag = 0;
+
+    }
+    // End of model fitting       
+
+    if (cycle >= max_iterations) convergence_flag = 0;
+  
+    // Model parameter estimates and standard errors
+    for (i = 0; i < npars; i++) {
+        est[i] = next_coef(i, 0);
+        stderr_sandwich[i] = sqrt(cov_mat_sandwich(i, i));
+        stderr_kc[i] = sqrt(cov_mat_kc(i, i));
+        stderr_md[i] = sqrt(cov_mat_md(i, i));
+    }
+
+    // One-sided p-values for the treatment effect
+    pvalue_sandwich = 1.0 - rcpp_pnorm(est[1] / stderr_sandwich[1]);
+    pvalue_kc = 1.0 - rcpp_pnorm(est[1] / stderr_kc[1]);
+    pvalue_md = 1.0 - rcpp_pnorm(est[1] / stderr_md[1]);
+
+    pval[0] = convergence_flag;
+    pval[1] = pvalue_sandwich;
+    pval[2] = pvalue_kc;
+    pval[3] = pvalue_md;
+
+    eff[0] = convergence_flag;
+    eff[1] = est[0];
+    eff[2] = est[1];
+
+    sim_results.pval = pval;
+    sim_results.eff = eff;
+
+    return sim_results;
+
+}
+// End of ContGEE
+
+SimulationResults BinGEE(const vector<double> &y, const NumericMatrix &x, const vector<int> &id, const vector<int> &id_freq, const int &direction_index, const int &max_iterations, const double &min_increment) {
+
+    int i, j, k, cycle, pat, nobs = y.size(), npats = id_freq.size(), npars = 2, npoints, continue_flag, convergence_flag;
+
+    vector<double> est(npars), stderr_sandwich(npars), stderr_kc(npars), stderr_md(npars), pval(4), eff(3);
+
+    double corr, ave, increment, corr_off_diagonal, corr_diagonal, pvalue_sandwich, pvalue_kc, pvalue_md;
+
+    NumericMatrix next_coef(npars, 1), current_coef(npars, 1), est_mat(npars, 1), hessian_mat(npars, npars), gradient_mat_sandwich(npars, npars), gradient_mat_kc(npars, npars), gradient_mat_md(npars, npars), pred, temp1, temp2, temp3, temp4, temp5, inv_corr_mat, cov_mat_sandwich, cov_mat_kc, cov_mat_md, inv_hessian_mat;
+
+    SimulationResults sim_results;
+
+    // Initialize the values    
+    ave = 0.0;    
+    for (i = 0; i < npats; i++) ave += 0.5 * (id_freq[i] + 0.0) * (id_freq[i] - 1.0);
+    corr = 0;
+    // Compute initial values of the binary GEE model
+    next_coef = BinInitValues(y, x);
+
+    // Stopping condition for model fitting
+    continue_flag = 1;
+    cycle = 0;
+
+    convergence_flag = 1;
+
+    while (continue_flag == 1) {
+
+        // Coefficient estimates in the current step
+        for (i = 0; i < npars; i++) current_coef(i, 0) = next_coef(i, 0);
+
+        est_mat = FillMat(est_mat, 0.0);
+        hessian_mat = FillMat(hessian_mat, 0.0);
+        gradient_mat_sandwich = FillMat(gradient_mat_sandwich, 0.0);
+        gradient_mat_kc = FillMat(gradient_mat_kc, 0.0);
+        gradient_mat_md = FillMat(gradient_mat_md, 0.0);
+
+        corr_off_diagonal = 0.0;
+        corr_diagonal = 0.0;
+
+        // Loop over patients/clusters
+        for (pat = 0; pat < npats; pat++) {
+
+            npoints = id_freq[pat];
+
+            // Extract the x and y values for the current patient/cluster 
+            vector<double> y_cluster(npoints);
+            NumericMatrix x_cluster(npoints, npars);
+            k = 0;
+            for (i = 0; i < nobs; i++) {
+                if (id[i] == pat + 1) {
+                    y_cluster[k] = y[i];
+                    for (j = 0; j < npars; j++) x_cluster(k, j) = x(i, j);                   
+                    k++;    
+                }
+            } 
+
+            // Predicted proportions
+            pred = MultMat(x_cluster, current_coef);
+            vector<double> prop(npoints);
+            for (i = 0; i < npoints; i++) prop[i] = 1.0 / (1.0 + exp(-pred(i, 0)));
+
+            // Correlation matrix for the current patient (under the assumption of an exchangeable working correlation matrix)
+            NumericMatrix corr_mat(npoints, npoints);
+            for (i = 0; i < npoints; i++) {
+                for (j = 0; j < npoints; j++) {
+                    if (i == j) corr_mat(i, j) = 1.0; else corr_mat(i, j) = corr;    
+                }
+            }            
+ 
+            // Variance matrices
+            NumericMatrix sqrt_var_mat(npoints, npoints);
+            for (i = 0; i < npoints; i++) {
+                for (j = 0; j < npoints; j++) {
+                    if (i == j) sqrt_var_mat(i, j) = sqrt(prop[i] * (1.0 - prop[i])); else sqrt_var_mat(i, j) = 0.0;    
+                } 
+            } 
+            temp1 = MultMat(sqrt_var_mat, corr_mat);
+            corr_mat = MultMat(temp1, sqrt_var_mat);
+            inv_corr_mat = InvMat(corr_mat);
+
+            // Design matrix
+            NumericMatrix design_mat(npoints, npars);
+            for (i = 0; i < npoints; i++) {
+                design_mat(i, 0) = prop[i] * (1.0 - prop[i]) * x_cluster(i, 0);
+                design_mat(i, 1) = prop[i] * (1.0 - prop[i]) * x_cluster(i, 1);
+            } 
+
+            NumericMatrix residual(npoints, 1);
+            for (i = 0; i < npoints; i++) residual(i, 0) = y_cluster[i] - prop[i];
+            for (i = 0; i < npoints; i++) corr_diagonal += Sq(residual(i, 0));    
+            for (j = 0; j < npoints - 1; j++) {
+                for (k = j + 1; k < npoints; k++) corr_off_diagonal += residual(j, 0) * residual(k, 0);   
+            }
+ 
+            // Update the estimate matrix
+            temp1 = MultMat(inv_corr_mat, residual);
+            temp2 = MultMat(TransMat(design_mat), temp1);
+            est_mat = AddMat(est_mat, temp2);
+
+            // Update the Hessian matrix
+            temp1 = MultMat(inv_corr_mat, design_mat);
+            temp2 = MultMat(TransMat(design_mat), temp1);
+            hessian_mat = AddMat(hessian_mat, temp2);
+
+            // Update the gradient matrix (uncorrected sandwich estimator)
+            temp1 = MultMat(TransMat(design_mat), inv_corr_mat);
+            temp2 = MultMat(temp1, residual);
+            temp3 = MultMat(temp2, TransMat(temp2));
+            gradient_mat_sandwich = AddMat(gradient_mat_sandwich, temp3);
+
+        }
+
+        // Simple model-based covariance estimate
+        inv_hessian_mat = InvMat(hessian_mat);
+
+        // Separate loop over patients/clusters to compute bias-corrected covariance estimators
+        for (pat = 0; pat < npats; pat++) {
+
+            npoints = id_freq[pat];
+
+            NumericMatrix identity_mat(npoints, npoints), leverage_mat(npoints, npoints);
+
+            // Extract the x and y values for the current patient/cluster 
+            vector<double> y_cluster(npoints);
+            NumericMatrix x_cluster(npoints, npars);
+            k = 0;
+            for (i = 0; i < nobs; i++) {
+                if (id[i] == pat + 1) {
+                    y_cluster[k] = y[i];
+                    for (j = 0; j < npars; j++) x_cluster(k, j) = x(i, j);                   
+                    k++;    
+                }
+            } 
+
+            // Predicted proportions
+            pred = MultMat(x_cluster, current_coef);
+            vector<double> prop(npoints);
+            for (i = 0; i < npoints; i++) prop[i] = 1.0 / (1.0 + exp(-pred(i, 0)));
+
+            // Correlation matrix for the current patient (under the assumption of an exchangeable working correlation matrix)
+            NumericMatrix corr_mat(npoints, npoints);
+            for (i = 0; i < npoints; i++) {
+                for (j = 0; j < npoints; j++) {
+                    if (i == j) {
+                        corr_mat(i, j) = 1.0;
+                        identity_mat(i, j) = 1.0;
+                    }
+                    else {
+                        corr_mat(i, j) = corr;   
+                        identity_mat(i, j) = 0.0;
+                    } 
+                }
+            }            
+
+            // Variance matrices
+            NumericMatrix sqrt_var_mat(npoints, npoints);
+            for (i = 0; i < npoints; i++) {
+                for (j = 0; j < npoints; j++) {
+                    if (i == j) sqrt_var_mat(i, j) = sqrt(prop[i] * (1.0 - prop[i])); else sqrt_var_mat(i, j) = 0.0;    
+                } 
+            } 
+            temp1 = MultMat(sqrt_var_mat, corr_mat);
+            corr_mat = MultMat(temp1, sqrt_var_mat);
+            inv_corr_mat = InvMat(corr_mat);
+
+            // Design matrix
+            NumericMatrix design_mat(npoints, npars);
+            for (i = 0; i < npoints; i++) {
+                design_mat(i, 0) = prop[i] * (1.0 - prop[i]) * x_cluster(i, 0);
+                design_mat(i, 1) = prop[i] * (1.0 - prop[i]) * x_cluster(i, 1);
+            } 
+
+            NumericMatrix residual(npoints, 1);
+            for (i = 0; i < npoints; i++) residual(i, 0) = y_cluster[i] - prop[i];
+
+            temp1 = MultMat(design_mat, inv_hessian_mat);
+            temp2 = MultMat(temp1, TransMat(design_mat));
+            leverage_mat = MultMat(temp2, inv_corr_mat);
+
+            // Update the gradient matrix (sandwich estimator by Kauermann and Carroll)
+            temp1 = MultMat(TransMat(design_mat), inv_corr_mat);
+            temp2 = InvSqRootMat(SubtractMat(identity_mat, leverage_mat)); 
+            temp3 = MultMat(temp1, temp2);
+            temp4 = MultMat(temp3, residual);
+            temp5 = MultMat(temp4, TransMat(temp4));
+            gradient_mat_kc = AddMat(gradient_mat_kc, temp5);
+
+            // Update the gradient matrix (sandwich estimator by Mancl and DeRouen)
+            temp1 = MultMat(TransMat(design_mat), inv_corr_mat);
+            temp2 = InvMat(SubtractMat(identity_mat, leverage_mat));
+            temp3 = MultMat(temp1, temp2);
+            temp4 = MultMat(temp3, residual);
+            temp5 = MultMat(temp4, TransMat(temp4));
+            gradient_mat_md = AddMat(gradient_mat_md, temp5);
+
+        }
+
+        // Update the common correlation coefficient (under the assumption of an exchangeable working correlation matrix)
+        corr = corr_off_diagonal * (npats - npars + 0.0) / (corr_diagonal * (ave - npars + 0.0));
+
+        // Update the coefficient estimates
+        temp1 = MultMat(inv_hessian_mat, est_mat);
+        next_coef = AddMat(current_coef, temp1);
+
+        // Covariance matrix for the coefficient estimates (uncorrected sandwich estimator)
+        temp1 = MultMat(gradient_mat_sandwich, inv_hessian_mat);
+        cov_mat_sandwich = MultMat(inv_hessian_mat, temp1);
+
+        // Covariance matrix for the coefficient estimates (sandwich estimator by Kauermann and Carroll)
+        temp1 = MultMat(gradient_mat_kc, inv_hessian_mat);
+        cov_mat_kc = MultMat(inv_hessian_mat, temp1);
+
+        // Covariance matrix for the coefficient estimates (sandwich estimator by Mancl and DeRouen)
+        temp1 = MultMat(gradient_mat_md, inv_hessian_mat);
+        cov_mat_md = MultMat(inv_hessian_mat, temp1);
+
+        cycle++;
+
+        increment = 0;
+        for (i = 0; i < npars; i++) increment += abs(next_coef[i] - current_coef[i]);
+
+        // Stopping condition for model fitting
+        if (cycle >= max_iterations || increment <= min_increment) continue_flag = 0;
+
+    }
+    // End of model fitting       
+
+    if (cycle >= max_iterations) convergence_flag = 0;
+
+    // Model parameter estimates and standard errors
+    for (i = 0; i < npars; i++) {
+        est[i] = next_coef(i, 0);
+        stderr_sandwich[i] = sqrt(cov_mat_sandwich(i, i));
+        stderr_kc[i] = sqrt(cov_mat_kc(i, i));
+        stderr_md[i] = sqrt(cov_mat_md(i, i));
+    }
+
+    // One-sided p-values for the treatment effect
+    pvalue_sandwich = 1.0 - rcpp_pnorm(est[1] / stderr_sandwich[1]);
+    pvalue_kc = 1.0 - rcpp_pnorm(est[1] / stderr_kc[1]);
+    pvalue_md = 1.0 - rcpp_pnorm(est[1] / stderr_md[1]);
+
+    /*******************************************************************/
+
+    pval[0] = convergence_flag;
+    pval[1] = pvalue_sandwich;
+    pval[2] = pvalue_kc;
+    pval[3] = pvalue_md;
+
+    eff[0] = convergence_flag;
+    eff[1] = est[0];
+    eff[2] = est[1];
+
+    sim_results.pval = pval;
+    sim_results.eff = eff;
+
+    return sim_results;
+
+}
+// End of BinGEE
+
+// [[Rcpp::export]]
+List ClustRandGEEC(const List &parameters_arg) {
+
+    List parameters(parameters_arg);
+
+    int narms = as<int>(parameters["narms"]);
+    int endpoint_index = as<int>(parameters["endpoint_index"]);
+    int cluster_index = as<int>(parameters["cluster_index"]);
+    vector<int> control_cluster_size_arg = as<vector<int>>(parameters["control_cluster_size"]);
+    vector<double> control_cluster_cum = as<vector<double>>(parameters["control_cluster_cum"]);
+    vector<int> treatment_cluster_size_vector = as<vector<int>>(parameters["treatment_cluster_size_vector"]);
+    IntegerMatrix treatment_cluster_size_matrix = as<IntegerMatrix>(parameters["treatment_cluster_size_matrix"]);
+    vector<double> treatment_cluster_cum_vector = as<vector<double>>(parameters["treatment_cluster_cum_vector"]);
+    NumericMatrix treatment_cluster_cum_matrix = as<NumericMatrix>(parameters["treatment_cluster_cum_matrix"]);
+
+    vector<int> sample_size = as<vector<int>>(parameters["sample_size"]);
+
+    vector<double> means = as<vector<double>>(parameters["means"]);
+    vector<double> within_cluster_sds = as<vector<double>>(parameters["within_cluster_sds"]);
+    vector<double> between_cluster_sds = as<vector<double>>(parameters["between_cluster_sds"]);
+
+    int direction_index = as<int>(parameters["direction_index"]);
+
+    int mult_test_index = as<int>(parameters["mult_test_index"]);
+    vector<double> weight = as<vector<double>>(parameters["weight"]);
+    vector<double> transition = as<vector<double>>(parameters["transition"]);
+
+    double control_alpha = as<double>(parameters["control_alpha"]);
+    double control_beta = as<double>(parameters["control_beta"]);
+    vector<double> treatment_alpha = as<vector<double>>(parameters["treatment_alpha"]);
+    vector<double> treatment_beta = as<vector<double>>(parameters["treatment_beta"]);
+
+    int max_iterations = as<int>(parameters["max_iterations"]);
+    double min_increment = as<double>(parameters["min_increment"]);
+
+    int nsims = as<int>(parameters["nsims_per_core"]);
+
+    /*******************************************************************/
+
+    double cluster_term;
+
+    int i, j, k, sim, control_size, treatment_size;
+
+    NumericMatrix pval_results(nsims, 4 * (narms - 1)), coef_results(nsims, 3 * (narms - 1)), pval(narms - 1, 4), eff(narms - 1, 3); 
+
+    vector<int> id, id_control, id_freq, id_freq_control, temp_vec_int, control_cluster_size, treatment_cluster_size;
+
+    vector<double> y, y_control, x, x_control, control_sample, current_treatment_sample, temp_vec, pvalue(narms - 1), adj_pvalue, cluster_size_results;
+
+    SimulationResults results;
+
+    /*******************************************************************/
+
+    cluster_size_results.clear();
+
+    for (sim = 0; sim < nsims; sim++) {
+
+        // Fixed cluster sizes
+        if (cluster_index == 1) {
+
+            control_cluster_size.clear();
+            for (i = 0; i < control_cluster_size_arg.size(); i++) control_cluster_size.push_back(control_cluster_size_arg[i]);
+
+        }
+
+        // Random cluster sizes
+        if (cluster_index == 2) {
+
+            // Generate a vector of random cluster sizes
+            control_cluster_size = RandomClusterSize(sample_size[0], control_cluster_cum);
+
+            cluster_size_results.insert(cluster_size_results.end(), control_cluster_size.begin(), control_cluster_size.end());
+
+        }
+
+        control_size = control_cluster_size.size();
+
+        // Generate data for the common control arm
+        x_control.clear();
+        y_control.clear();
+        id_control.clear();
+
+        // Number of patients in each cluster
+        id_freq_control.clear();
+        id_freq_control.insert(id_freq_control.end(), control_cluster_size.begin(), control_cluster_size.end());
+
+        for (i = 0; i < control_size; i++) {
+
+            // Normal endpoint
+            if (endpoint_index == 1) {
+
+                cluster_term = Normal(1, 0.0, between_cluster_sds[0])[0];
+                control_sample = Normal(control_cluster_size[i], means[0] + cluster_term, within_cluster_sds[0]);
+            }
+
+            // Binary endpoint
+            if (endpoint_index == 2) {
+
+                cluster_term = Beta(1, control_alpha, control_beta)[0];
+                control_sample = Binary(control_cluster_size[i], cluster_term);
+
+            }
+
+            temp_vec = fillvec(control_cluster_size[i], 0.0);
+            x_control.insert(x_control.end(), temp_vec.begin(), temp_vec.end());
+
+            temp_vec = control_sample;
+            y_control.insert(y_control.end(), temp_vec.begin(), temp_vec.end());
+
+            temp_vec_int = FillVecInt(control_cluster_size[i], i + 1);
+            id_control.insert(id_control.end(), temp_vec_int.begin(), temp_vec_int.end());
+
+        }
+
+        // Generate data for each treatment arm
+        for (k = 1; k < narms; k++) {
+
+            // Fixed cluster sizes
+            if (cluster_index == 1) {
+
+                treatment_cluster_size.clear();
+                if (narms == 2) {
+                
+                    for (i = 0; i < treatment_cluster_size_vector.size(); i++) treatment_cluster_size.push_back(treatment_cluster_size_vector[i]); 
+
+                } else {
+
+                    for (i = 0; i < treatment_cluster_size_matrix.ncol(); i++) treatment_cluster_size.push_back(treatment_cluster_size_matrix(k - 1, i));   // # nocov
+
+                }
+
+            }
+
+            // Random cluster sizes
+            if (cluster_index == 2) {
+
+                if (narms == 2) {
+
+                    // Generate a vector of random cluster sizes
+                    treatment_cluster_size = RandomClusterSize(sample_size[k], treatment_cluster_cum_vector);
+
+                } else {
+
+                    treatment_cluster_size = RandomClusterSize(sample_size[k], ExtractRow(treatment_cluster_cum_matrix, k - 1));
+
+                }
+
+                cluster_size_results.insert(cluster_size_results.end(), treatment_cluster_size.begin(), treatment_cluster_size.end());
+
+            }
+
+            treatment_size = treatment_cluster_size.size();
+
+            // Number of patients in each cluster
+            id_freq.clear();
+            id_freq.insert(id_freq.end(), id_freq_control.begin(), id_freq_control.end());
+            id_freq.insert(id_freq.end(), treatment_cluster_size.begin(), treatment_cluster_size.end());
+
+            // Generate the data
+            x.clear();
+            y.clear();
+            id.clear();
+
+            x.insert(x.end(), x_control.begin(), x_control.end());
+            y.insert(y.end(), y_control.begin(), y_control.end());
+            id.insert(id.end(), id_control.begin(), id_control.end());
+
+            // Current treatment arm
+            for (i = 0; i < treatment_size; i++) {
+
+                // Normal endpoint
+                if (endpoint_index == 1) {
+
+                    cluster_term = Normal(1, 0.0, between_cluster_sds[k])[0];
+                    current_treatment_sample = Normal(treatment_cluster_size[i], means[k] + cluster_term, within_cluster_sds[k]);
+                }
+
+                // Binary endpoint
+                if (endpoint_index == 2) {
+
+                    cluster_term = Beta(1, treatment_alpha[k - 1], treatment_beta[k - 1])[0];
+                    current_treatment_sample = Binary(treatment_cluster_size[i], cluster_term);
+
+                }
+
+                temp_vec = fillvec(treatment_cluster_size[i], 1.0);
+                x.insert(x.end(), temp_vec.begin(), temp_vec.end());
+
+                temp_vec = current_treatment_sample;
+                y.insert(y.end(), temp_vec.begin(), temp_vec.end());
+
+                temp_vec_int = FillVecInt(treatment_cluster_size[i], control_size + i + 1);
+                id.insert(id.end(), temp_vec_int.begin(), temp_vec_int.end());
+
+            }
+
+            NumericMatrix x_mat(x.size(), 2);
+
+            for (i = 0; i < x.size(); i++) {
+
+                x_mat(i, 0) = 1.0;
+                x_mat(i, 1) = x[i];
+
+                // Direction of favorable outcome
+                if (direction_index == 2) {
+                    if (endpoint_index == 1) y[i] = -y[i];
+                    if (endpoint_index == 2) y[i] = 1.0 - y[i];
+                }
+
+            }
+
+            // Analyze the data for the current treatment-control comparison using generalized estimating equations
+
+            // Normal endpoint
+            if (endpoint_index == 1) results = ContGEE(y, x_mat, id, id_freq, direction_index, max_iterations, min_increment);
+
+            // Binary endpoint
+            if (endpoint_index == 2) results = BinGEE(y, x_mat, id, id_freq, direction_index, max_iterations, min_increment);
+
+            // Save the convergence flags and raw p-values
+            for (j = 0; j < 4; j++) pval(k - 1, j) = results.pval[j];
+
+            // Save the convergence flags and effect estimates
+            for (j = 0; j < 3; j++) eff(k - 1, j) = results.eff[j];
+
+        }
+
+        // Apply a multiplicity adjustment
+        if (mult_test_index >= 1) {
+
+            // Extract the raw pvalues for each method
+            for (j = 1; j < 4; j++) {
+
+                for (k = 0; k < narms - 1; k++) pvalue[k] = pval(k, j);
+
+                adj_pvalue = TradMultAdj(mult_test_index, pvalue, weight, transition);
+
+                for (k = 0; k < narms - 1; k++) pval(k, j) = adj_pvalue[k];
+
+            }
+
+        }
+
+        // Save the convergence flags and adjusted p-values for each simulation run
+        i = 0;
+        for (k = 0; k < narms - 1; k++) {
+            for (j = 0; j < 4; j++) {
+                pval_results(sim, i) = pval(k, j);
+                i++;
+            }
+        }                
+
+        // Save the convergence flags and effect estimates for each simulation run
+        i = 0;
+        for (k = 0; k < narms - 1; k++) {
+            for (j = 0; j < 3; j++) {
+                coef_results(sim, i) = eff(k, j);
+                i++;
+            }
+        }                
+
+    }
+    // End of simulations
+
+    /*******************************************************************/
+
+    // Return simulation results
+
+    return List::create(Named("pval_results") = pval_results,
+                        Named("coef_results") = coef_results,
+                        Named("cluster_size_results") = cluster_size_results);
+
+
+}
+// End of ClustRandGEEC
+
+// [[Rcpp::export]]
+NumericVector ExportTradMultAdj(const int &test, const NumericVector &pvalue, const NumericVector &weight, const NumericVector &transition) {
+
+    // Compute adjusted p-values
+    vector<double> temp = TradMultAdj(test, FromNumericVector(pvalue), FromNumericVector(weight), FromNumericVector(transition));
+
+    NumericVector adj_pvalue = ToNumericVector(temp);
+
+    return adj_pvalue;
+
+}
+
+// [[Rcpp::export]]
+IntegerVector ExportRandomClusterSize(const int &sample_size, const NumericVector &proportion) {
+
+    vector<int> temp = RandomClusterSize(sample_size, FromNumericVector(proportion));
+
+    IntegerVector cluster_size = ToIntegerVector(temp);
+
+    return(cluster_size);
+
+}
