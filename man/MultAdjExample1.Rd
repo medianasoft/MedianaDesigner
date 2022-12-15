@@ -65,7 +65,10 @@ parameters$sequence = c(3, 2, 1)
 parameters$alpha = 0.025
 
 # Number of simulations
-parameters$nsims = 1000
+parameters$nsims = 100
+
+# Number of cores for parallel calculations
+parameters$ncores = 1
 
 # Run simulations to perform power calculations
 results = MultAdj(parameters)

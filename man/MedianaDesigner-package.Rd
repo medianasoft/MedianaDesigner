@@ -52,7 +52,7 @@ The package comes with one example data set:
 \itemize{
 \item \code{\link{EventPredData}}: Example data set to illustrate event prediction in event-driven trials.
 }
-Multiple case studies are included in this vignette to illustrate the use of this package for designing clinical trials with adaptive and traditional design:
+Multiple case studies are included in this vignette to illustrate the use of this package for designing clinical trials with data-driven design elements:
 \itemize{
 \item \link{ADSSModExample1}: Simulation-based design of an adaptive trial with sample size re-estimation (normally distributed endpoint).
 \item \link{ADSSModExample2}: Simulation-based design of an adaptive trial with sample size re-estimation (binary endpoint).

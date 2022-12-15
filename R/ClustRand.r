@@ -233,7 +233,7 @@ ClustRand = function(parameters) {
                                          "double",
                                          NA) 
 
-        if (sum(parameters$treatment_cluster_proportion) != 1) stop(
+        if (abs(sum(parameters$treatment_cluster_proportion)-1) > 0.0001) stop(
           "Relative cluster sizes in the control arm (treatment_cluster_proportion) are incorrectly specified.", call. = FALSE)
 
         parameters$treatment_cluster_proportion_vector = parameters$treatment_cluster_proportion
@@ -258,8 +258,8 @@ ClustRand = function(parameters) {
                                          NA) 
 
         for (i in 1:(narms - 1)) {
-          if (sum(parameters$treatment_cluster_proportion[i, ]) != 1) stop(
-          "Relative cluster sizes in the treatment arms (treatment_cluster_proportion) are incorrectly specified.", call. = FALSE)
+          if (abs(sum(parameters$treatment_cluster_proportion[i, ])-1) > 0.0001) stop(
+            "Relative cluster sizes in the treatment arms (treatment_cluster_proportion) are incorrectly specified.", call. = FALSE)
         }
 
         parameters$treatment_cluster_proportion_matrix = parameters$treatment_cluster_proportion

@@ -120,9 +120,9 @@ test_that("Success run ADRand with Normal case (single core)", {
   temp_file = tempfile("Simulation report.docx", fileext=".docx")
   GenerateReport(results, temp_file)
   expect_true(file.exists(temp_file))
-  expect_true(file.size(temp_file) > 35000)
+  expect_true(file.size(temp_file) > 15000)
   
-    # Check for report generation
+  # Check for report generation
   ADRandReportDoc(results)
   GenerateReport(results, tempfile(fileext = ".docx"))
 })

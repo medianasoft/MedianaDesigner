@@ -66,6 +66,9 @@ parameters$alpha = 0.025
 # Number of simulations, you should prefer more
 parameters$nsims = 100
 
+# Number of cores for parallel calculations
+parameters$ncores = 1
+
 # Run simulations to compute operating characteristics
 results = ADTreatSel(parameters)
 
