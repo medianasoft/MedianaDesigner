@@ -7,8 +7,8 @@ Author: Alex Dmitrienko [aut, cre]
 Authors@R: c(
   person("Alex", "Dmitrienko", email = "admitrienko@mediana.us", role = c("aut", "cre")))
 Depends: R (>= 3.1.2)
-Imports: Rcpp (>= 0.12.10), RcppNumerical, methods, officer, flextable, devEMF, mvtnorm, shiny, shinydashboard, shinyMatrix, foreach, parallel, doParallel, MASS, rootSolve, lme4, lmerTest, pbkrtest
-Suggests: testthat, doRNG
+Imports: Rcpp (>= 0.12.10), RcppNumerical, methods, officer, flextable, devEMF, mvtnorm, shiny, shinydashboard, shinyMatrix, foreach, parallel, doParallel, MASS, rootSolve, lme4, lmerTest, pbkrtest, doRNG
+Suggests: testthat
 LinkingTo: Rcpp, RcppEigen, RcppNumerical
 Maintainer: Alex Dmitrienko <admitrienko@mediana.us>
 Description:
