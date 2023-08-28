@@ -23,8 +23,8 @@ For more information on this package, visit \url{https://mediana.us/free-softwar
 \tabular{ll}{
 Package: \tab MedianaDesigner\cr
 Type: \tab Package\cr
-Version: \tab 0.8\cr
-Date: \tab 2022-06-20\cr
+Version: \tab 0.13\cr
+Date: \tab 2023-08-27\cr
 License: \tab GPL-3
 }
 Key functions included in the package:
